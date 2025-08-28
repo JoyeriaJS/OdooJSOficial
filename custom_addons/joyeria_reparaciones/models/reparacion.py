@@ -12,7 +12,6 @@ import pytz
 from  pytz import utc
 from pytz import timezone
 from datetime import datetime, timedelta
-import unicodedata, re
 
 
 
@@ -23,7 +22,6 @@ class Reparacion(models.Model):
     _inherit = ['mail.thread', 'mail.activity.mixin']  # 👈 Esto habilita el historial
     _description = 'Reparación de Joyería'
     partner_id = fields.Many2one('res.partner', string="Cliente")
-
     
     
 
@@ -422,48 +420,7 @@ class Reparacion(models.Model):
         return record
 
 
-    def _normalize_person_name(name: str) -> str:
-        """minúsculas, sin tildes y espacios simples (para comparar nombres)"""
-        if not name:
-            return ''
-        s = ''.join(c for c in unicodedata.normalize('NFKD', name) if not unicodedata.combining(c))
-        s = re.sub(r'\s+', ' ', s.lower()).strip()
-        return s
-
-class ResPartnerBlockDupFromClienteId(models.Model):
-    _inherit = 'res.partner'
-
-    @api.model
-    def create(self, vals):
-        """
-        Bloquea crear PERSONAS activas con nombre duplicado (ignorando mayúsculas/tildes)
-        cuando la creación proviene del campo cliente_id en joyeria.reparacion.
-        """
-        ctx = self.env.context or {}
-        # Solo cuando el "Crear y editar…" viene desde el formulario de Reparación
-        if ctx.get('active_model') == 'joyeria.reparacion' and not ctx.get('skip_cliente_dup_check'):
-            name = (vals.get('name') or '').strip()
-            is_company = bool(vals.get('is_company', False))
-            active = bool(vals.get('active', True))
-
-            if name and active and not is_company:
-                target = _normalize_person_name(name)
-
-                # Prefiltro por rendimiento y comparación canónica exacta
-                candidates = self.env['res.partner'].search([
-                    ('active', '=', True),
-                    ('is_company', '=', False),
-                    ('name', 'ilike', name),
-                ])
-                for p in candidates:
-                    if _normalize_person_name(p.name) == target:
-                        raise ValidationError(
-                            "Ya existe un cliente con el mismo nombre y apellido: «%s». "
-                            "Selecciona el existente o combina los contactos en Contactos."
-                            % p.name
-                        )
-
-        return super().create(vals)
+    
 
 
 
