@@ -10,7 +10,8 @@
                         <!-- Información General -->
                         <group string="Información General" col="2">
                             <field name="name" readonly="1"/>
-                            <field name="cliente_id"/>
+                            <field name="cliente_id"
+                            attrs="{'readonly': [('id','!=',False)]}"/>
                             <field name="correo_cliente"/>
                             <field name="telefono"/>
                             <field name="direccion_entrega"/>
