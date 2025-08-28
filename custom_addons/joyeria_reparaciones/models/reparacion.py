@@ -15,7 +15,6 @@ from datetime import datetime, timedelta
 
 
 
-
 CHILE_TZ = pytz.timezone('America/Santiago')
 
 class Reparacion(models.Model):
@@ -421,32 +420,28 @@ class Reparacion(models.Model):
         return record
 
 
+    
+    class ResPartnerRestrictWriteForRMAClients(models.Model):
+        _inherit = 'res.partner'
+
     def _is_admin(self):
         return self.env.uid == SUPERUSER_ID or self.env.user.has_group('base.group_system')
 
-    @api.constrains('cliente_id')
-    def _constrain_cliente_edit_admin_only(self):
-        """
-        Permite a todos establecer cliente_id en creación.
-        En registros existentes, solo ADMIN puede cambiar cliente_id.
-        """
-        for rec in self:
-            # En creación (sin id todavía) no se valida
-            if not rec.id:
-                continue
+    def write(self, vals):
+        # Admin siempre puede editar
+        if self._is_admin():
+            return super().write(vals)
 
-            # Tomar el valor previo directo desde la BD para detectar cambio real
-            self.env.cr.execute("SELECT cliente_id FROM joyeria_reparacion WHERE id = %s", (rec.id,))
-            row = self.env.cr.fetchone()
-            if not row:
-                continue
-            old_cliente_id = row[0]  # puede ser None
+        # ¿Alguno de estos partners es/ha sido usado como cliente en una reparación?
+        # (Si sí, solo admin puede editar su información)
+        Reparacion = self.env['joyeria.reparacion'].sudo()
+        if Reparacion.search_count([('cliente_id', 'in', self.ids)]) > 0:
+            raise ValidationError(
+                "Solo los administradores pueden editar la información de clientes asociados a reparaciones."
+            )
 
-            # ¿cambió el cliente_id?
-            if (old_cliente_id or False) != (rec.cliente_id.id or False):
-                if not rec._is_admin():
-                    raise ValidationError("Solo los administradores pueden cambiar el cliente de esta reparación.")
-
+        # Si no están vinculados a reparaciones, permitir edición normal
+        return super().write(vals)
 
 
     
