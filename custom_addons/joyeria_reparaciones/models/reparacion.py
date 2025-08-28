@@ -337,8 +337,8 @@ class Reparacion(models.Model):
             ], limit=1)
             if vendedora:
                 self.firma_id = vendedora.id
-                ahora_chile = datetime.now()  # Hora local del servidor
-                self.fecha_firma = ahora_chile
+                # ✅ Guardar SIEMPRE en UTC (Odoo lo mostrará en la TZ del usuario)
+                self.fecha_firma = fields.Datetime.now()
 
 
     @api.onchange('clave_autenticacion_manual')
