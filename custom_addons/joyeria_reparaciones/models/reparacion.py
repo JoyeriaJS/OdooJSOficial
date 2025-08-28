@@ -12,7 +12,6 @@ import pytz
 from  pytz import utc
 from pytz import timezone
 from datetime import datetime, timedelta
-import unicodedata
 
 
 
@@ -24,61 +23,7 @@ class Reparacion(models.Model):
     _description = 'Reparación de Joyería'
     partner_id = fields.Many2one('res.partner', string="Cliente")
 
-
-    # --- PÉGALO DENTRO DE LA CLASE Reparacion ---
-
-    @staticmethod
-    def _canon_name(txt):
-        """Minúsculas, sin tildes, espacios simples; para comparar nombres."""
-        if not txt:
-            return ''
-        s = ''.join(c for c in unicodedata.normalize('NFKD', txt) if not unicodedata.combining(c))
-        s = s.lower()
-        s = re.sub(r'\s+', ' ', s).strip()
-        return s
-
-    def _partner_has_user(self, partner):
-        """True si el partner está vinculado a una cuenta de usuario activa (res.users)."""
-        return bool(self.env['res.users'].search_count([
-            ('partner_id', '=', partner.id),
-            ('active', '=', True),
-        ]))
-
-    @api.constrains('cliente_id')
-    def _check_cliente_id_unique_name(self):
-        """
-        Evita que en 'cliente_id' se asigne un contacto persona ACTIVA cuyo nombre
-        duplique al de otro contacto persona ACTIVA (ignorando tildes/mayúsculas).
-        Permite si el "duplicado" tiene usuario (p.ej., responsables del sistema).
-        """
-        for rec in self:
-            cliente = rec.cliente_id
-            if not cliente or not cliente.active or cliente.is_company:
-                continue
-
-            nombre_norm = rec._canon_name(cliente.name)
-
-            # Prefiltro por rendimiento y luego comparación canónica SIN límite (para no omitir casos).
-            candidates = self.env['res.partner'].search([
-                ('id', '!=', cliente.id),
-                ('active', '=', True),
-                ('is_company', '=', False),
-                ('name', 'ilike', cliente.name),
-            ])
-
-            for p in candidates:
-                if rec._canon_name(p.name) == nombre_norm:
-                    # Si el duplicado tiene usuario activo, lo ignoramos (no es “cliente público”)
-                    if rec._partner_has_user(p):
-                        continue
-                    raise ValidationError(
-                        "El cliente «%s» ya existe con el mismo nombre y apellido. "
-                        "Selecciona el existente o combina los contactos en Contactos."
-                        % (p.name,)
-                    )
-
-
-
+    
     
 
     name = fields.Char(
