@@ -492,33 +492,22 @@ class Reparacion(models.Model):
             return super().write(vals)
 
     
+## Código validacion de duplicados
+    def init(self):
+        # ÚNICO por compañía + nombre (en minúsculas), solo para PERSONAS activas
+        self.env.cr.execute("""
+            CREATE UNIQUE INDEX IF NOT EXISTS partner_unique_person_name_per_company
+            ON res_partner (COALESCE(company_id, 0), lower(name))
+            WHERE is_company = false AND active = true;
+        """)
+        # (Opcional) Versión tolerante a tildes. Requiere extensión unaccent:
+        # self.env.cr.execute("CREATE EXTENSION IF NOT EXISTS unaccent;")
+        # self.env.cr.execute("""
+        #     CREATE UNIQUE INDEX IF NOT EXISTS partner_unique_person_name_unaccent_per_company
+        #     ON res_partner (COALESCE(company_id, 0), lower(unaccent(name)))
+        #     WHERE is_company = false AND active = true;
+        # """)
 
-    @api.constrains('cliente_id')
-    def _check_cliente_id_no_duplicate(self):
-        for rec in self:
-            partner = rec.cliente_id
-            if partner and partner.active and not partner.is_company:
-                # normalizar nombre
-                nombre_norm = ''.join(
-                    c for c in unicodedata.normalize('NFKD', partner.name or '')
-                    if not unicodedata.combining(c)
-                ).lower().strip()
-
-                # buscar duplicados
-                dups = self.env['res.partner'].search([
-                    ('id', '!=', partner.id),
-                    ('active', '=', True),
-                    ('is_company', '=', False),
-                ])
-                for dup in dups:
-                    dup_norm = ''.join(
-                        c for c in unicodedata.normalize('NFKD', dup.name or '')
-                        if not unicodedata.combining(c)
-                    ).lower().strip()
-                    if dup_norm == nombre_norm:
-                        raise ValidationError(
-                            "Ya existe un cliente con el mismo nombre y apellido: %s" % dup.name
-                        )
 
 
 
