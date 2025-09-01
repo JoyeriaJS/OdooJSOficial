@@ -493,7 +493,32 @@ class Reparacion(models.Model):
 
     
 
+    @api.constrains('cliente_id')
+    def _check_cliente_id_no_duplicate(self):
+        for rec in self:
+            partner = rec.cliente_id
+            if partner and partner.active and not partner.is_company:
+                # normalizar nombre
+                nombre_norm = ''.join(
+                    c for c in unicodedata.normalize('NFKD', partner.name or '')
+                    if not unicodedata.combining(c)
+                ).lower().strip()
 
+                # buscar duplicados
+                dups = self.env['res.partner'].search([
+                    ('id', '!=', partner.id),
+                    ('active', '=', True),
+                    ('is_company', '=', False),
+                ])
+                for dup in dups:
+                    dup_norm = ''.join(
+                        c for c in unicodedata.normalize('NFKD', dup.name or '')
+                        if not unicodedata.combining(c)
+                    ).lower().strip()
+                    if dup_norm == nombre_norm:
+                        raise ValidationError(
+                            "Ya existe un cliente con el mismo nombre y apellido: %s" % dup.name
+                        )
 
 
 
