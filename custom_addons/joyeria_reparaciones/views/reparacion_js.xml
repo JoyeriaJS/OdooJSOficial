@@ -53,9 +53,8 @@
                             <field name="vendedora_id"
                                    placeholder="Escanea el QR de la vendedora"
                                    options="{'no_open': True, 'no_create': True, 'no_create_edit': True, 'no_quick_create': True}"
-                                   readonly="1"
-                                   groups="base.group_system"/>
-                            <field name="clave_autenticacion_manual" password="True" placeholder="Escanea el QR o ingresa la clave" groups="base.group_system"/>
+                                   readonly="1"/>
+                            <field name="clave_autenticacion_manual" password="True" placeholder="Escanea el QR o ingresa la clave"/>
                             <field name="local_tienda"/>
                             <field name="fecha_recepcion" readonly="1"/>
                             <field name="fecha_entrega"/>
@@ -69,6 +68,7 @@
                             <field name="precio_unitario" />
                             <field name="extra"/>
                             <field name="extra2"/>
+                            <field name="extra3"/>
                             <field name="subtotal" readonly="1"/>
                             <field name="abono"/>
                             <field name="saldo" readonly="1"/>

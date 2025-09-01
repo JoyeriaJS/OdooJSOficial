@@ -1,4 +1,4 @@
-from odoo import models, fields, api, SUPERUSER_ID
+from odoo import models, fields, api, SUPERUSER_ID, _
 from odoo.exceptions import ValidationError, UserError
 from dateutil.relativedelta import relativedelta
 import base64
@@ -12,7 +12,7 @@ import pytz
 from  pytz import utc
 from pytz import timezone
 from datetime import datetime, timedelta
-
+import unicodedata
 
 
 CHILE_TZ = pytz.timezone('America/Santiago')
@@ -22,7 +22,6 @@ class Reparacion(models.Model):
     _inherit = ['mail.thread', 'mail.activity.mixin']  # 👈 Esto habilita el historial
     _description = 'Reparación de Joyería'
     partner_id = fields.Many2one('res.partner', string="Cliente")
-    
     
 
     name = fields.Char(
@@ -79,7 +78,7 @@ class Reparacion(models.Model):
         ('especial', 'Especial')
     ], string='Tipo de peso', required=True, tracking=True)
 
-    peso_valor = fields.Float(string='Peso', required=True, tracking=True)
+    peso_valor = fields.Float(string='Peso', required=False, tracking=True)
     vendedora_id= fields.Many2one('joyeria.vendedora', string='Recibido por', readonly=True, tracking=True)
 
 
@@ -115,6 +114,7 @@ class Reparacion(models.Model):
     precio_unitario = fields.Float(string='Precio unitario', tracking=True)
     extra = fields.Float(string='Extra', tracking=True)
     extra2 = fields.Float(string='Extra 2', tracking=True)
+    extra3 = fields.Float(string='Extra 3', tracking=True)
     subtotal = fields.Float(string='Subtotal', compute='_compute_subtotal', store=True)
     abono = fields.Float(string='Abono', tracking=True,)
     saldo = fields.Float(string="Saldo", compute='_compute_saldo', store=True)
@@ -135,7 +135,7 @@ class Reparacion(models.Model):
     ], string='Estado', default='presupuesto', tracking=True, required=True, store=True, readonly=False)
 
 
-    clave_autenticacion_manual = fields.Char(string='Clave de Autenticación', tracking=False)
+    clave_autenticacion_manual = fields.Char(string='QR de quien recibe', tracking=False)
 
     # NUEVOS CAMPOS
     metal_utilizado = fields.Selection([
@@ -165,13 +165,51 @@ class Reparacion(models.Model):
 
     #firma_salida_id = fields.Many2one('joyeria.vendedora', string="Firma salida del taller", readonly=True)
     #fecha_salida_taller = fields.Datetime("🕒 Fecha y hora de salida", readonly=True)
-    firma_id = fields.Many2one('joyeria.vendedora', string='Firmado por', readonly=True, tracking=True)
+    firma_id = fields.Many2one('joyeria.vendedora', string='Retirado por', readonly=True, tracking=True)
     fecha_firma = fields.Datetime(string='Fecha de firma', readonly=True)
-    clave_firma_manual = fields.Char(string='Clave o QR para firma')
+    clave_firma_manual = fields.Char(string='QR de quien retira')
 
 
-    
+    @staticmethod
+    def _normalize_name(name):
+        """Normaliza el nombre: minúsculas, sin tildes, espacios simples."""
+        if not name:
+            return ''
+        s = ''.join(c for c in unicodedata.normalize('NFKD', name) if not unicodedata.combining(c))
+        s = s.lower()
+        s = re.sub(r'\s+', ' ', s).strip()
+        return s
 
+    @api.constrains('cliente_id')
+    def _check_cliente_id_unique_name(self):
+        """
+        Valida que el cliente asignado en cliente_id no duplique el nombre
+        de otro cliente (persona activa sin ser usuario del sistema).
+        """
+        for rec in self:
+            cliente = rec.cliente_id
+            if not cliente or not cliente.active or cliente.is_company:
+                continue
+
+            nombre_normalizado = rec._normalize_name(cliente.name)
+
+            # Buscar otros partners con el mismo nombre canónico
+            duplicates = self.env['res.partner'].search([
+                ('id', '!=', cliente.id),
+                ('active', '=', True),
+                ('is_company', '=', False),
+            ], limit=50)
+
+            for dup in duplicates:
+                if rec._normalize_name(dup.name) == nombre_normalizado:
+                    # Si el duplicado tiene usuario, lo ignoramos (puede ser responsable del sistema)
+                    tiene_usuario = self.env['res.users'].search_count([('partner_id', '=', dup.id)], limit=1)
+                    if not tiene_usuario:
+                        raise ValidationError(
+                            "El cliente «%s» ya existe con el mismo nombre y apellido.\n"
+                            "Por favor selecciona el cliente existente o combina los contactos."
+                            % (dup.name,)
+                        )
 
 
     @api.depends('fecha_recepcion')
@@ -184,10 +222,6 @@ class Reparacion(models.Model):
                      + relativedelta(months=1)).date()
             else:
                 rec.vencimiento_garantia = False
-
-
-
-    
 
 
 
@@ -224,7 +258,18 @@ class Reparacion(models.Model):
         else:
             self.vendedora_id = False
     
+    
+    
 
+    @api.onchange('responsable_id')
+    def _onchange_responsable_auto_confirm_first_time(self):
+        for rec in self:
+            # Valor "persistido" antes del cambio (lo que hay en la BD)
+            prev_tenía_responsable = bool(rec._origin.responsable_id) if rec._origin and rec._origin.id else False
+            # Si no tenía responsable en BD y ahora sí se asignó, auto-confirmar
+            if (not prev_tenía_responsable) and rec.responsable_id and rec.estado != 'confirmado':
+                rec.estado = 'confirmado'
+    
 
 
     
@@ -283,10 +328,10 @@ class Reparacion(models.Model):
                 rec.estado = rec.estado  # No cambia el valor, pero evita la edición
 
 
-    @api.depends('cantidad', 'precio_unitario', 'extra', 'extra2')
+    @api.depends('cantidad', 'precio_unitario', 'extra', 'extra2', 'extra3')
     def _compute_subtotal(self):
         for rec in self:
-            rec.subtotal = rec.cantidad * rec.precio_unitario + rec.extra + rec.extra2
+            rec.subtotal = rec.cantidad * rec.precio_unitario + rec.extra + rec.extra2 + rec.extra3
 
     @api.depends('subtotal', 'abono')
     def _compute_saldo(self):
@@ -337,8 +382,8 @@ class Reparacion(models.Model):
             ], limit=1)
             if vendedora:
                 self.firma_id = vendedora.id
-                # ✅ Guardar SIEMPRE en UTC (Odoo lo mostrará en la TZ del usuario)
-                self.fecha_firma = fields.Datetime.now()
+                ahora_chile = datetime.now()  # Hora local del servidor
+                self.fecha_firma = ahora_chile
 
 
     @api.onchange('clave_autenticacion_manual')
@@ -359,14 +404,18 @@ class Reparacion(models.Model):
             if vendedora:
                 self.vendedora_id = vendedora.id
 
-###create funcional######
+# ###create funcional######
     @api.model
     def create(self, vals):
         ahora = datetime.now(CHILE_TZ).strftime('%d/%m/%Y %H:%M:%S')
         mensajes = []
 
-        # ✅ Validar peso especial (usando campo 'peso' y 'peso_valor' como indicaste)
-        if vals.get('peso') == 'especial' and not vals.get('peso_valor'):
+        is_admin = self.env.uid == SUPERUSER_ID or self.env.user.has_group('base.group_system')
+        # ✅ Detectar importación (wizard de importar Odoo)
+        is_import = bool(self.env.context.get('import_file') or self.env.context.get('from_import'))
+
+        # ✅ Validar peso especial (solo si NO es admin y NO es importación)
+        if (not is_admin) and (not is_import) and vals.get('peso') == 'especial' and not vals.get('peso_valor'):
             raise ValidationError("Debe ingresar un valor para el campo 'Peso' si selecciona tipo de peso 'Especial'.")
 
         # Generar secuencia
@@ -420,29 +469,35 @@ class Reparacion(models.Model):
         return record
 
 
-    
     class ResPartnerRestrictWriteForRMAClients(models.Model):
         _inherit = 'res.partner'
 
-    def _is_admin(self):
-        return self.env.uid == SUPERUSER_ID or self.env.user.has_group('base.group_system')
+        def _is_admin(self):
+            return self.env.uid == SUPERUSER_ID or self.env.user.has_group('base.group_system')
 
-    def write(self, vals):
-        # Admin siempre puede editar
-        if self._is_admin():
+        def write(self, vals):
+            # Admin siempre puede editar
+            if self._is_admin():
+                return super().write(vals)
+
+            # ¿Alguno de estos partners es/ha sido usado como cliente en una reparación?
+            # (Si sí, solo admin puede editar su información)
+            Reparacion = self.env['joyeria.reparacion'].sudo()
+            if Reparacion.search_count([('cliente_id', 'in', self.ids)]) > 0:
+                raise ValidationError(
+                    "Solo los administradores pueden editar la información de clientes asociados a reparaciones."
+                )
+
+            # Si no están vinculados a reparaciones, permitir edición normal
             return super().write(vals)
 
-        # ¿Alguno de estos partners es/ha sido usado como cliente en una reparación?
-        # (Si sí, solo admin puede editar su información)
-        Reparacion = self.env['joyeria.reparacion'].sudo()
-        if Reparacion.search_count([('cliente_id', 'in', self.ids)]) > 0:
-            raise ValidationError(
-                "Solo los administradores pueden editar la información de clientes asociados a reparaciones."
-            )
+    
 
-        # Si no están vinculados a reparaciones, permitir edición normal
-        return super().write(vals)
 
+
+
+
+    
 
     
     
@@ -484,16 +539,18 @@ class Reparacion(models.Model):
 
 ###write funcional"""""""""
     def write(self, vals):
-        for rec in self:
-            # Validar que no se cambie el tipo de peso una vez creado
-            if 'peso' in vals and vals['peso'] != rec.peso:
-                raise ValidationError("No se permite cambiar el tipo de peso una vez creado el registro.")
+        is_admin = self.env.uid == SUPERUSER_ID or self.env.user.has_group('base.group_system')
 
-            # Validar que no se cambie el valor del peso una vez creado
-            #if 'peso_valor' in vals and vals['peso_valor'] != rec.peso_valor:
-            #    raise ValidationError("No se permite modificar el valor del peso una vez creado el registro.")
+        # Validaciones SOLO para usuarios NO admin
+        if not is_admin:
+            for rec in self:
+                # No permitir cambiar el tipo de peso una vez creado
+                if 'peso' in vals and vals['peso'] != rec.peso:
+                    raise ValidationError("No se permite cambiar el tipo de peso una vez creado el registro.")
+                # Si en el futuro reactivas la validación de peso_valor, quedaría aquí análoga
 
         res = super().write(vals)
+
         for rec in self:
             # ✍️ Procesar firma si se ingresó clave
             if vals.get('clave_firma_manual'):
@@ -502,17 +559,8 @@ class Reparacion(models.Model):
             # 📦 Procesar vendedora si se ingresó clave
             if vals.get('clave_autenticacion_manual'):
                 rec._procesar_vendedora()
+
         return res
-
-
-
-    
-
-
-
-
-    
-
 
     def imprimir_reporte_responsables(self):
         # Rango de fechas fijo, puedes cambiarlo más adelante a dinámico
@@ -533,14 +581,10 @@ class Reparacion(models.Model):
         )
     
     
-    
-    
     def copy(self, default=None):
         if self.env.user.has_group('joyeria_reparaciones.grupo_gestion_estado_reparacion'):
             raise UserError("No tienes permiso para duplicar órdenes de reparación.")
         return super(Reparacion, self).copy(default)
-
-
 
 
     def _generar_codigo_qr(self):
@@ -552,11 +596,6 @@ class Reparacion(models.Model):
                 qr_img.save(buffer, format="PNG")
                 record.qr = base64.b64encode(buffer.getvalue())
     
-
-
-    
-
-
 
     def unlink(self):
         if self.env.user.has_group('joyeria_reparaciones.grupo_gestion_estado_reparacion'):
@@ -675,10 +714,3 @@ class Vendedora(models.Model):
     def imprimir_etiqueta_vendedora(self):
         return self.env.ref('joyeria_reparaciones.action_report_etiqueta_vendedora').report_action(self)
 
-
-
-
-            
-
-
-  
