@@ -643,6 +643,8 @@ class Reparacion(models.Model):
 
 
 
+
+
 class Operacion(models.Model):
     _name = 'joyeria.operacion'
     _description = 'Línea de operación de reparación'
