@@ -173,29 +173,6 @@ class Reparacion(models.Model):
 
 
 
-class ResPartnerRequirePhoneOnCreateFromRMA(models.Model):
-    _inherit = 'res.partner'
-
-    @api.model
-    def create(self, vals):
-        """
-        Cuando el partner se crea desde el formulario de joyeria.reparacion (popup del Many2one cliente_id),
-        exigir que venga un número de teléfono (phone o mobile).
-        """
-        ctx = self.env.context or {}
-        # Solo interceptamos la creación que proviene del modelo de Reparación
-        if ctx.get('active_model') == 'joyeria.reparacion':
-            phone = (vals.get('phone') or '').strip()
-            mobile = (vals.get('mobile') or '').strip()
-            if not phone and not mobile:
-                raise ValidationError(
-                    "Debe ingresar un número de teléfono para crear el cliente (puede ser Teléfono o Móvil)."
-                )
-
-        return super().create(vals)
-
-
-
 
     @staticmethod
     def _normalize_name(name):
@@ -666,6 +643,33 @@ class ResPartnerRequirePhoneOnCreateFromRMA(models.Model):
             name = name.replace("'", "-")
             args += [('name', operator, name)]
         return self.search(args, limit=limit).name_get()
+
+
+
+class ResPartnerRequirePhoneOnCreateFromRMA(models.Model):
+    _inherit = 'res.partner'
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        """
+        Cuando el partner se crea desde el formulario de joyeria.reparacion (popup del Many2one cliente_id),
+        exigir que venga un número de teléfono (phone o mobile).
+        Odoo 17: usar @api.model_create_multi.
+        """
+        ctx = self.env.context or {}
+        from_rma = ctx.get('active_model') == 'joyeria.reparacion'
+
+        if from_rma:
+            for vals in vals_list:
+                phone = (vals.get('phone') or '').strip()
+                mobile = (vals.get('mobile') or '').strip()
+                if not phone and not mobile:
+                    raise ValidationError(
+                        "Debe ingresar un número de teléfono para crear el cliente (puede ser Teléfono o Móvil)."
+                    )
+
+        return super().create(vals_list)
+
 
 
 
