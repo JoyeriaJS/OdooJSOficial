@@ -172,6 +172,10 @@ class Reparacion(models.Model):
 
 
 
+
+class ResPartnerRequirePhoneOnCreateFromRMA(models.Model):
+    _inherit = 'res.partner'
+
     @api.model
     def create(self, vals):
         """
@@ -189,6 +193,7 @@ class Reparacion(models.Model):
                 )
 
         return super().create(vals)
+
 
 
 
