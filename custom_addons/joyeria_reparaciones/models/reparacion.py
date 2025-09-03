@@ -170,6 +170,32 @@ class Reparacion(models.Model):
     clave_firma_manual = fields.Char(string='QR de quien retira')
 
 
+
+
+
+class ResPartnerRequirePhoneOnCreateFromRMA(models.Model):
+    _inherit = 'res.partner'
+
+    @api.model
+    def create(self, vals):
+        """
+        Cuando el partner se crea desde el formulario de joyeria.reparacion (popup del Many2one cliente_id),
+        exigir que venga un número de teléfono (phone o mobile).
+        """
+        ctx = self.env.context or {}
+        # Solo interceptamos la creación que proviene del modelo de Reparación
+        if ctx.get('active_model') == 'joyeria.reparacion':
+            phone = (vals.get('phone') or '').strip()
+            mobile = (vals.get('mobile') or '').strip()
+            if not phone and not mobile:
+                raise ValidationError(
+                    "Debe ingresar un número de teléfono para crear el cliente (puede ser Teléfono o Móvil)."
+                )
+
+        return super().create(vals)
+
+
+
     @staticmethod
     def _normalize_name(name):
         """Normaliza el nombre: minúsculas, sin tildes, espacios simples."""
