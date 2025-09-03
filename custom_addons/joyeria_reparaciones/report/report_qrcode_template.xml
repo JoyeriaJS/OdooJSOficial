@@ -11,11 +11,11 @@
           'margin_right': 2
       }"/>
       <t t-foreach="docs" t-as="o">
-        <!-- 👇 agrandado 2px -->
-        <div class="page" style="font-size:13px; text-align:center; line-height: 1.4;">
+        <!-- 👇 fuente base 12px -->
+        <div class="page" style="font-size:12px; text-align:center; line-height: 1.4;">
           <p>************************</p>
-          <!-- RMA en tamaño más grande (+2px) -->
-          <p style="font-size:20px; font-weight:bold; margin: 4px 0;">
+          <!-- RMA más grande (+1px sobre el original, 19px) -->
+          <p style="font-size:19px; font-weight:bold; margin: 4px 0;">
             <t t-esc="o.name"/>
           </p>
           <p>************************</p>
