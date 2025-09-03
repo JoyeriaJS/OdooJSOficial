@@ -11,17 +11,16 @@
           'margin_right': 2
       }"/>
       <t t-foreach="docs" t-as="o">
-        <!-- 👇 aquí subí font-size de 11px a 12px -->
-        <div class="page" style="font-size:12px; text-align:center; line-height: 1.4;">
+        <div class="page" style="font-size:11px; text-align:center; line-height: 1.4;">
           <p>************************</p>
           <!-- RMA en tamaño más grande -->
-          <p style="font-size:15px; font-weight:bold; margin: 4px 0;">
+          <p style="font-size:18px; font-weight:bold; margin: 4px 0;">
             <t t-esc="o.name"/>
           </p>
           <p>************************</p>
 
           <p><strong>Local:</strong> <t t-esc="o.local_tienda"/></p>
-          <p><strong>Cliente:</strong><br/><t t-esc="(o.cliente_id.name or '') + ' ' + (o.apellido_cliente or '')"/></p>
+          <p><strong>Cliente:</strong><t t-esc="(o.cliente_id.name or '') + ' ' + (o.apellido_cliente or '')"/></p>
           <p><strong>Servicio:</strong> <t t-esc="o.servicio"/></p>
           <p><strong>Metal:</strong> <t t-esc="o.metal"/></p>
           <p><strong>Modelo:</strong> <t t-esc="o.modelo"/></p>
