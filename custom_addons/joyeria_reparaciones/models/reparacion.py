@@ -645,31 +645,22 @@ class Reparacion(models.Model):
         return self.search(args, limit=limit).name_get()
 
 
-
-class ResPartnerRequirePhoneOnCreateFromRMA(models.Model):
+class ResPartnerRequirePhoneAlways(models.Model):
     _inherit = 'res.partner'
 
-    @api.model_create_multi
-    def create(self, vals_list):
+    @api.constrains('phone', 'mobile', 'is_company', 'active')
+    def _check_phone_required_for_person(self):
         """
-        Cuando el partner se crea desde el formulario de joyeria.reparacion (popup del Many2one cliente_id),
-        exigir que venga un número de teléfono (phone o mobile).
-        Odoo 17: usar @api.model_create_multi.
+        Obliga a ingresar teléfono (phone o mobile) para PERSONAS activas.
+        Se ejecuta en create/write y es independiente del contexto del popup.
         """
-        ctx = self.env.context or {}
-        from_rma = ctx.get('active_model') == 'joyeria.reparacion'
-
-        if from_rma:
-            for vals in vals_list:
-                phone = (vals.get('phone') or '').strip()
-                mobile = (vals.get('mobile') or '').strip()
-                if not phone and not mobile:
+        for rec in self:
+            # Sólo aplica a clientes/personas (no empresas) y activos
+            if rec.active and not rec.is_company:
+                if not (rec.phone and rec.phone.strip()) and not (rec.mobile and rec.mobile.strip()):
                     raise ValidationError(
-                        "Debe ingresar un número de teléfono para crear el cliente (puede ser Teléfono o Móvil)."
+                        "Debe ingresar un número de teléfono (Teléfono o Móvil) para crear/guardar el cliente."
                     )
-
-        return super().create(vals_list)
-
 
 
 
