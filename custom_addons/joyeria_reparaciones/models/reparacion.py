@@ -130,12 +130,12 @@ class Reparacion(models.Model):
     estado = fields.Selection([
         ('presupuesto', 'Presupuesto'),
         ('reparado', 'Reparado'),
-        ('cancelado', 'Cancelado'),
+        ('reparado y entregado', 'Reparado y Entregado'),
         ('confirmado', 'Confirmado')
     ], string='Estado', default='presupuesto', tracking=True, required=True, store=True, readonly=False)
 
 
-    clave_autenticacion_manual = fields.Char(string='QR de quien recibe', tracking=True, required=True)
+    clave_autenticacion_manual = fields.Char(string='QR de quien recibe', required=True)
 
     # NUEVOS CAMPOS
     metal_utilizado = fields.Selection([
@@ -274,6 +274,15 @@ class Reparacion(models.Model):
             if (not prev_tenía_responsable) and rec.responsable_id and rec.estado != 'confirmado':
                 rec.estado = 'confirmado'
     
+    @api.onchange('clave_firma_manual')
+    def _onchange_firma_auto_entregado_first_time(self):
+        for rec in self:
+            # ¿Tenía firma antes en la BD?
+            prev_tenia_firma = bool(rec._origin.firma_id) if rec._origin and rec._origin.id else False
+            # Si ahora hay clave (se escaneó) y ya quedó asignada la firma (tu onchange actual la setea),
+            # y antes NO tenía firma, entonces es la primera vez -> pasar a "reparado y entregado".
+            if (not prev_tenia_firma) and rec.clave_firma_manual and rec.firma_id and rec.estado != 'reparado y entregado':
+                rec.estado = 'reparado y entregado'
 
 
     
