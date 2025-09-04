@@ -48,6 +48,14 @@ class Reparacion(models.Model):
         default=lambda self: fields.Datetime.now(),
         readonly=True
     )
+
+    tipo_cliente= fields.Selection([
+        ('Cliente Normal'),
+        ('Cliente Mayorista'),
+        ('Cliente Preferente'),
+
+    ],string='Tipo Cliente', required=True, tracking=True)
+
     tipo_joya = fields.Selection([
         ('anillo', 'Anillo'),
         ('argolla', 'Argolla'),
