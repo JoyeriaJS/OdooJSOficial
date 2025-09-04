@@ -119,7 +119,7 @@
                   decoration-info="estado == 'presupuesto'"
                   decoration-success="estado == 'confirmado'"
                   decoration-primary="estado == 'reparado'"
-                  decoration-danger="estado == 'cancelado'">
+                  decoration-danger="estado == 'reparado y entregado'">
                 <field name="name" string="Referencia de reparación" type="open"/>
                 <field name="tipo_joya" string="Producto a reparar"/>
                 <field name="cliente_id" string="Cliente"/>
