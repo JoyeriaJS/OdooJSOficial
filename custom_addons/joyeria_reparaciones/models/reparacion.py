@@ -49,7 +49,12 @@ class Reparacion(models.Model):
         readonly=True
     )
 
+    tipo_cliente= fields.Selection([
+        ('cliente normal', 'Cliente Normal'),
+        ('cliente mayorista', 'Cliente Mayorista'),
+        ('cliente preferente', 'Cliente Preferente')
 
+    ], string='Tipo Cliente', required=True, tracking=True)
 
     tipo_joya = fields.Selection([
         ('anillo', 'Anillo'),
@@ -640,17 +645,6 @@ class ResPartnerRequirePhoneAlways(models.Model):
                         "Debe ingresar un número de teléfono (Teléfono o Móvil) para crear/guardar el cliente."
                     )
 
-
-
-# --- Campo en Contactos (res.partner) ---
-class ResPartnerTipoCliente(models.Model):
-    _inherit = 'res.partner'
-
-    tipo_cliente = fields.Selection([
-        ('mayorista', 'Mayorista'),
-        ('normal', 'Cliente Normal'),
-        ('preferente', 'Cliente Preferente'),
-    ], string='Tipo de Cliente', default='normal', tracking=True)
 
 class Operacion(models.Model):
     _name = 'joyeria.operacion'

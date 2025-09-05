@@ -131,9 +131,6 @@
         </field>
     </record>
 
-
-    
-
     <!-- Acción y Menú -->
     <record id="action_joyeria_reparacion_listado" model="ir.actions.act_window">
         <field name="name">Órdenes de Reparación</field>
