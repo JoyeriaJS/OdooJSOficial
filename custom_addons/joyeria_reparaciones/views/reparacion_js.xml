@@ -11,7 +11,7 @@
                         <group string="Información General" col="2">
                             <field name="name" readonly="1"/>
                             <field name="cliente_id"/>
-                            <field name="cliente_id"
+                            <field name="tipo_cliente"
                                 context="{'form_view_ref': 'joyeria_reparaciones.view_partner_quick_popup'}"
                                 options="{'no_quick_create': False, 'no_create': False, 'no_create_edit': False, 'no_open': False}"/>
 
