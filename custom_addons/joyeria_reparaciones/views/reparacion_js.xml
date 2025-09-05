@@ -11,10 +11,7 @@
                         <group string="Información General" col="2">
                             <field name="name" readonly="1"/>
                             <field name="cliente_id"/>
-                            <field name="tipo_cliente"
-                                context="{'form_view_ref': 'joyeria_reparaciones.view_partner_quick_popup'}"
-                                options="{'no_quick_create': False, 'no_create': False, 'no_create_edit': False, 'no_open': False}"/>
-
+                            <field name="tipo_cliente"/>
                             <field name="correo_cliente"/>
                             <field name="telefono"/>
                             <field name="direccion_entrega"/>
@@ -153,32 +150,7 @@
 
     <menuitem id="menu_joyeria_root" name="Reparaciones" action="action_joyeria_reparacion_listado"/>
 
-    <record id="view_partner_quick_popup" model="ir.ui.view">
-        <field name="name">res.partner.quick.popup.with.tipo.cliente</field>
-        <field name="model">res.partner</field>
-        <field name="arch" type="xml">
-            <form string="Nuevo Cliente">
-            <sheet>
-                <group col="2" string="Identificación">
-                <field name="name" placeholder="Nombre y apellido" required="1"/>
-                <field name="tipo_cliente" required="1"/>
-                </group>
-
-                <group col="2" string="Contacto">
-                <field name="phone"/>
-                <field name="mobile"/>
-                <field name="email"/>
-                </group>
-
-                <!-- Campo opcional si usas RUT/DNI -->
-                <!-- <group string="Fiscal">
-                <field name="vat"/>
-                </group> -->
-            </sheet>
-            </form>
-        </field>
-    </record>
-
+    
     
     
 </odoo>
