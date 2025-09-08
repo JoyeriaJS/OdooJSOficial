@@ -4,7 +4,7 @@
     'summary': 'Gestión de órdenes de reparación de joyas',
     'author': 'DR',
     'category': 'Operations',
-    'depends': ['base', 'product', 'sale', 'contacts','point_of_sale', 'report_xlsx','mail', 'web',],
+    'depends': ['base', 'product', 'sale', 'contacts','point_of_sale', 'report_xlsx','mail'],
     'data': [
         'security/joyeria_security.xml',
         'security/ir.model.access.csv',
@@ -44,11 +44,6 @@
         'report/report_monthly_rma_pos_template.xml',  
         
     ],
-    'queb':[
-        'views/reparacion_assets.xml', 
-    ],
-
-
     'installable': True,
     'application': True,
 }
