@@ -36,26 +36,26 @@
 
                         <!-- Datos de salida del taller -->
                         <group string="🔧 Datos de salida del taller" col="2" groups="base.group_system">
-                            <field name="gramos_utilizado" groups="base.group_system"
-                                style="background-color:#e6f0ff; color:#003366;"/>   <!-- Azul -->
+                           <field name="gramos_utilizado" groups="base.group_system"
+                                style="background-color:#e6f0ff; color:#003366;"/>
 
                             <field name="metales_extra" groups="base.group_system"
-                                style="background-color:#e6f0ff; color:#003366;"/>   <!-- Azul -->
+                                style="background-color:#e6f0ff; color:#003366;"/>
 
                             <field name="peso_total" groups="base.group_system" readonly="1"
-                                style="background-color:#fff8b3; color:#665c00; font-weight:bold;"/> <!-- Amarillo + título y valor en negrita -->
+                                style="background-color:#fff8b3; color:#665c00; font-weight:bold;"/>
 
                             <field name="cobro_interno" groups="base.group_system"
-                                style="background-color:#e6ffe6; color:#004d00;"/>   <!-- Verde -->
+                                style="background-color:#e6ffe6; color:#004d00;"/>
 
                             <field name="hechura" groups="base.group_system"
-                                style="background-color:#e6ffe6; color:#004d00;"/>   <!-- Verde -->
+                                style="background-color:#e6ffe6; color:#004d00;"/>
 
                             <field name="cobros_extras" groups="base.group_system"
-                                style="background-color:#e6ffe6; color:#004d00;"/>   <!-- Verde -->
+                                style="background-color:#e6ffe6; color:#004d00;"/>
 
                             <field name="total_salida_taller" groups="base.group_system" readonly="1"
-                                style="background-color:#fff8b3; color:#665c00; font-weight:bold;"/> <!-- Amarillo + título y valor en negrita -->
+                                style="background-color:#fff8b3; color:#665c00; font-weight:bold;"/>
 
                             <field name="clave_firma_manual" password="True" groups="base.group_system" placeholder="Escanear o ingresar clave"/>
                             <field name="firma_id" readonly="1" groups="base.group_system"/>
