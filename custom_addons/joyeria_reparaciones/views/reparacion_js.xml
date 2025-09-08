@@ -72,7 +72,7 @@
                             <field name="local_tienda"/>
                             <field name="fecha_recepcion" readonly="1"/>
                             <field name="fecha_entrega"/>
-                            <field name="vencimiento_garantia" readonly="1"/>
+                            <field name="vencimiento_garantia" readonly="1" invisible="1"/>
                             <field name="estado" groups="base.group_system"/>
                             <field name="express"/>
                         </group>
