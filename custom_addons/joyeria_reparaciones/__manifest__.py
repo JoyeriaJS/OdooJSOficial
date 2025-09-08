@@ -9,7 +9,6 @@
         'security/joyeria_security.xml',
         'security/ir.model.access.csv',
         'views/reparacion_js.xml',
-        'views/reparacion_assets.xml', 
         'data/ir_sequence_data.xml',
         'data/joyeria_data.xml',
         'report/report.xml',  # ← este es el que importa
@@ -45,6 +44,11 @@
         'report/report_monthly_rma_pos_template.xml',  
         
     ],
+    'queb':[
+        'views/reparacion_assets.xml', 
+    ],
+
+
     'installable': True,
     'application': True,
 }
