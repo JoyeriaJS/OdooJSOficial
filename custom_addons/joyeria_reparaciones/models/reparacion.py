@@ -54,7 +54,7 @@ class Reparacion(models.Model):
         ('cliente mayorista', 'Cliente Mayorista'),
         ('cliente preferente', 'Cliente Preferente')
 
-    ], string='Tipo Cliente', required=True, tracking=True)
+    ], string='Tipo Cliente', required=False, tracking=True)
 
     tipo_joya = fields.Selection([
         ('anillo', 'Anillo'),
@@ -487,21 +487,7 @@ class Reparacion(models.Model):
             return super().write(vals)
 
     
-## Código validacion de duplicados
-    def init(self):
-        # ÚNICO por compañía + nombre (en minúsculas), solo para PERSONAS activas
-        self.env.cr.execute("""
-            CREATE UNIQUE INDEX IF NOT EXISTS partner_unique_person_name_per_company
-            ON res_partner (COALESCE(company_id, 0), lower(name))
-            WHERE is_company = false AND active = true;
-        """)
-        # (Opcional) Versión tolerante a tildes. Requiere extensión unaccent:
-        # self.env.cr.execute("CREATE EXTENSION IF NOT EXISTS unaccent;")
-        # self.env.cr.execute("""
-        #     CREATE UNIQUE INDEX IF NOT EXISTS partner_unique_person_name_unaccent_per_company
-        #     ON res_partner (COALESCE(company_id, 0), lower(unaccent(name)))
-        #     WHERE is_company = false AND active = true;
-        # """)
+
 
 
 
