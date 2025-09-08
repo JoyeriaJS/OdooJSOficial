@@ -37,16 +37,20 @@
                         <!-- Datos de salida del taller -->
                         <group string="🔧 Datos de salida del taller" col="2" groups="base.group_system">
                             <field name="metal_utilizado" groups="base.group_system" options="{'no_empty': True}"/>
-                            <!-- Azul -->
+                           <!-- AZUL -->
                             <field name="gramos_utilizado" groups="base.group_system" class="k-blue"/>
                             <field name="metales_extra" groups="base.group_system" class="k-blue"/>
 
-                            <!-- Amarillo + negrita (totales) -->
+                            <!-- AMARILLO + negrita (totales, readonly) -->
                             <field name="peso_total" groups="base.group_system" readonly="1" class="k-yellow k-bold"/>
-                            <!-- Verdes editables -->
+
+                            <!-- VERDES (editables) -->
                             <field name="cobro_interno" groups="base.group_system" class="k-green"/>
                             <field name="hechura" groups="base.group_system" class="k-green"/>
                             <field name="cobros_extras" groups="base.group_system" class="k-green"/>
+
+                            <!-- AMARILLO + negrita (totales, readonly) -->
+                            <field name="total_salida_taller" groups="base.group_system" readonly="1" class="k-yellow k-bold"/>
                             <!-- Amarillo + negrita (totales) -->
                             <field name="total_salida_taller" groups="base.group_system" readonly="1" class="k-yellow k-bold"/>
                             <field name="clave_firma_manual" password="True" groups="base.group_system" placeholder="Escanear o ingresar clave"/>

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <template id="assets_backend_reparacion_colors"
+            name="Reparación colores"
+            inherit_id="web._assets_backend">
+    <xpath expr="." position="inside">
+      <style>
+        /* AZUL (editables también) */
+        .o_form_view .o_field_widget.k-blue,
+        .o_form_view .o_field_widget.k-blue input,
+        .o_form_view .o_field_widget.k-blue textarea {
+          background-color: #e6f0ff !important;
+          color: #003366 !important;
+        }
+
+        /* VERDE (editables) */
+        .o_form_view .o_field_widget.k-green,
+        .o_form_view .o_field_widget.k-green input,
+        .o_form_view .o_field_widget.k-green textarea {
+          background-color: #d9fdd3 !important;
+          color: #1c6b1c !important;
+        }
+
+        /* AMARILLO (totales; también readonly span) */
+        .o_form_view .o_field_widget.k-yellow,
+        .o_form_view .o_field_widget.k-yellow input,
+        .o_form_view .o_field_widget.k-yellow span {
+          background-color: #fff8b3 !important;
+          color: #665c00 !important;
+        }
+
+        /* Negrita para totales */
+        .o_form_view .o_field_widget.k-bold,
+        .o_form_view .o_field_widget.k-bold input,
+        .o_form_view .o_field_widget.k-bold span {
+          font-weight: 700 !important;
+        }
+      </style>
+    </xpath>
+  </template>
+</odoo>
