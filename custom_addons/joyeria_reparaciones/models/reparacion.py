@@ -54,7 +54,7 @@ class Reparacion(models.Model):
         ('cliente mayorista', 'Cliente Mayorista'),
         ('cliente preferente', 'Cliente Preferente')
 
-    ], string='Tipo Cliente', required=False, tracking=True)
+    ], string='Tipo Cliente', required=True, tracking=True)
 
     tipo_joya = fields.Selection([
         ('anillo', 'Anillo'),
