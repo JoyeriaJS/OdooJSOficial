@@ -58,6 +58,7 @@
                ('fecha_entrega','!=', False),
                ('estado','!=','reparado'),
                ('estado','!=','reparado y entregado'),
+               ('estado','!=','cancelado'),
              ],
              order='fecha_entrega asc'
            )"/>
