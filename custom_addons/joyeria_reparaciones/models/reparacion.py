@@ -245,10 +245,10 @@ class Reparacion(models.Model):
             label = dict(rec._fields['local_tienda'].selection).get(rec.local_tienda, rec.local_tienda)
 
             if rec.local_tienda == 'local maipu':
-                rec.direccion_entrega = "Jumbo, Av. Los Pajaritos 3302 (Local Maipú), Metro Santiago Bueras"
+                rec.direccion_entrega = "Local Maipú, Jumbo, Av. Los Pajaritos 3302, Metro Santiago Bueras"
             else:
                 # Ej: "Paseo Estado 344, Local 921, Santiago Centro, Metro Plaza de Armas (Galería Pasaje Matte)"
-                rec.direccion_entrega = f"Paseo Estado 344, {label}, Santiago Centro, Metro Plaza de Armas (Galería Pasaje Matte)"
+                rec.direccion_entrega = f"{label}, Paseo Estado 344, Santiago Centro, Metro Plaza de Armas (Galería Pasaje Matte)"
 
     @api.onchange('responsable_id')
     def _onchange_responsable_id(self):
