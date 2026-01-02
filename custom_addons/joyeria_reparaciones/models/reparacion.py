@@ -41,7 +41,7 @@ class Reparacion(models.Model):
     telefono = fields.Char(string='Teléfono', required=True)
     direccion_entrega = fields.Char(string='Dirección de entrega')
     vencimiento_garantia = fields.Date(string='Vencimiento de la garantía',compute='_compute_vencimiento_garantia',store=True)
-    fecha_entrega = fields.Date(string='Fecha de entrega', tracking=True)
+    fecha_entrega = fields.Date(string='Fecha de entrega', tracking=True, required=True)
     responsable_id = fields.Many2one('res.users', string="Responsable", default=False, tracking=True)
     fecha_retiro = fields.Datetime(string='Fecha y hora de retiro', tracking=True)
     fecha_recepcion = fields.Datetime(
