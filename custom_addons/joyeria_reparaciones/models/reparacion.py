@@ -38,8 +38,9 @@ class Reparacion(models.Model):
         string="Código ingresado",
         help="Código entregado por administración.",
         store=True
-    )
-    
+)
+
+
     # Código generado por administración
     auth_code_id = fields.Many2one(
         "joyeria.reparacion.authcode",
@@ -53,12 +54,14 @@ class Reparacion(models.Model):
         string="Requiere autorización",
         compute="_compute_requiere_autorizacion",
         store=True
-    )
+)
     codigo_autorizacion_id = fields.Many2one(
     "joyeria.reparacion.authcode",
     string="Código autorizado",
     readonly=True
-    )
+)
+
+
     modelo = fields.Char(string='Modelo', required=False)
     cliente_id = fields.Many2one('res.partner', string='Nombre y apellido del Cliente', required=True)
     nombre_cliente = fields.Char(string='Nombre y apellido del cliente', required=False)
@@ -67,7 +70,7 @@ class Reparacion(models.Model):
     telefono = fields.Char(string='Teléfono', required=True)
     direccion_entrega = fields.Char(string='Dirección de entrega')
     vencimiento_garantia = fields.Date(string='Vencimiento de la garantía',compute='_compute_vencimiento_garantia',store=True)
-    fecha_entrega = fields.Date(string='Fecha de entrega', tracking=True, required=True)
+    fecha_entrega = fields.Date(string='Fecha de entrega', tracking=True)
     responsable_id = fields.Many2one('res.users', string="Responsable", default=False, tracking=True)
     fecha_retiro = fields.Datetime(string='Fecha y hora de retiro', tracking=True)
     fecha_recepcion = fields.Datetime(
@@ -217,6 +220,8 @@ class Reparacion(models.Model):
                 saldo == 0
             )
 
+
+
     @staticmethod
     def _normalize_name(name):
         """Normaliza el nombre: minúsculas, sin tildes, espacios simples."""
@@ -292,10 +297,10 @@ class Reparacion(models.Model):
             label = dict(rec._fields['local_tienda'].selection).get(rec.local_tienda, rec.local_tienda)
 
             if rec.local_tienda == 'local maipu':
-                rec.direccion_entrega = "Local Maipú, Jumbo, Av. Los Pajaritos 3302, Metro Santiago Bueras"
+                rec.direccion_entrega = "Jumbo, Av. Los Pajaritos 3302 (Local Maipú), Metro Santiago Bueras"
             else:
                 # Ej: "Paseo Estado 344, Local 921, Santiago Centro, Metro Plaza de Armas (Galería Pasaje Matte)"
-                rec.direccion_entrega = f"{label}, Paseo Estado 344, Santiago Centro, Metro Plaza de Armas (Galería Pasaje Matte)"
+                rec.direccion_entrega = f"Paseo Estado 344, {label}, Santiago Centro, Metro Plaza de Armas (Galería Pasaje Matte)"
 
     @api.onchange('responsable_id')
     def _onchange_responsable_id(self):
@@ -351,14 +356,12 @@ class Reparacion(models.Model):
             self.hechura = 0.0
             self.cobros_extras = 0.0
 
-
-
     
-    @api.model
-    def create(self, vals):
-        if not vals.get('vendedora_id'):
-            raise ValidationError("Debe escanear una vendedora válida antes de crear la orden.")
-        return super(Reparacion, self).create(vals)
+    #@api.model
+    #def create(self, vals):
+     #   if not vals.get('vendedora_id'):
+      #      raise ValidationError("Debe escanear una vendedora válida antes de crear la orden.")
+       # return super(Reparacion, self).create(vals)
 
 
 
@@ -440,6 +443,11 @@ class Reparacion(models.Model):
         self._procesar_firma()
 
 
+    from datetime import datetime
+    import pytz
+
+    CHILE_TZ = pytz.timezone('America/Santiago')
+
     def _procesar_firma(self):
         if self.clave_firma_manual:
             clave = self.clave_firma_manual.strip().upper()
@@ -451,8 +459,12 @@ class Reparacion(models.Model):
             ], limit=1)
             if vendedora:
                 self.firma_id = vendedora.id
-                ahora_chile = datetime.now()  # Hora local del servidor
-                self.fecha_firma = ahora_chile
+
+                # ✅ Obtener hora exacta de Chile, convertir a UTC y eliminar tzinfo (Odoo requiere naive)
+                ahora_chile = datetime.now(pytz.timezone('America/Santiago'))
+                ahora_utc_naive = ahora_chile.astimezone(pytz.UTC).replace(tzinfo=None)
+
+                self.fecha_firma = ahora_utc_naive
 
 
     @api.onchange('clave_autenticacion_manual')
@@ -627,6 +639,8 @@ class Reparacion(models.Model):
         return record
 
 
+
+
     class ResPartnerRestrictWriteForRMAClients(models.Model):
         _inherit = 'res.partner'
 
@@ -654,28 +668,29 @@ class Reparacion(models.Model):
 
 
 
-    def write(self, vals):
-        for record in self:
-            ya_tiene_vendedora = bool(record.vendedora_id)
+    #ef write(self, vals):
+     #
+    #  for record in self:
+     #      ya_tiene_vendedora = bool(record.vendedora_id)
 
-            # Si ya hay vendedora asignada, no permitir modificarla ni borrar claves
-            if ya_tiene_vendedora:
-                if 'vendedora_id' in vals and not vals['vendedora_id']:
-                    raise ValidationError("No puede eliminar la vendedora una vez asignada.")
-
-                for campo in ['clave_autenticacion', 'codigo_qr', 'clave_autenticacion_manual']:
-                    if campo in vals and not vals[campo]:
-                        raise ValidationError(f"No puede eliminar el valor de {campo} una vez asignada la vendedora.")
-
-                claves_cambiadas = any(campo in vals for campo in ['clave_autenticacion', 'codigo_qr', 'clave_autenticacion_manual'])
-                if 'vendedora_id' in vals or claves_cambiadas:
-                    raise ValidationError("No se puede modificar la clave o la vendedora una vez asignada.")
-
-            # Procesar firma si se ingresa por primera vez
-            if vals.get('clave_firma_manual'):
-                record._procesar_firma()
-
-        return super(Reparacion, self).write(vals)
+      #      # Si ya hay vendedora asignada, no permitir modificarla ni borrar claves
+       #     if ya_tiene_vendedora:
+        #        if 'vendedora_id' in vals and not vals['vendedora_id']:
+         #           raise ValidationError("No puede eliminar la vendedora una vez asignada.")
+#
+ #               for campo in ['clave_autenticacion', 'codigo_qr', 'clave_autenticacion_manual']:
+  #                  if campo in vals and not vals[campo]:
+   #                     raise ValidationError(f"No puede eliminar el valor de {campo} una vez asignada la vendedora.")
+#
+ #               claves_cambiadas = any(campo in vals for campo in ['clave_autenticacion', 'codigo_qr', 'clave_autenticacion_manual'])
+  #              if 'vendedora_id' in vals or claves_cambiadas:
+   #                 raise ValidationError("No se puede modificar la clave o la vendedora una vez asignada.")
+#
+ #           # Procesar firma si se ingresa por primera vez
+  #          if vals.get('clave_firma_manual'):
+   #             record._procesar_firma()
+#
+ #       return super(Reparacion, self).write(vals)
     
     def _normalizar_clave(self, clave):
         """
@@ -735,6 +750,11 @@ class Reparacion(models.Model):
         # ✔ GUARDAR CAMBIOS
         # ============================================================
         return super().write(vals)
+
+
+
+
+        
 
     def imprimir_reporte_responsables(self):
         # Rango de fechas fijo, puedes cambiarlo más adelante a dinámico
