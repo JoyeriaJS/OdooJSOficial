@@ -87,6 +87,17 @@
                             <field name="abono"/>
                             <field name="saldo" readonly="1"/>
                         </group>
+                        
+                    </group> <!-- CIERRE group col="2" -->
+
+                    <!-- AUTORIZACIÓN PARA RMA SIN COSTO -->
+                        <group string="Autorización (solo si es sin costo)"
+                            visibility_condition="requiere_autorizacion == True">
+
+                            <field name="codigo_ingresado"
+                                force_save="1"
+                                placeholder="Ingresa el código entregado por administración"/>
+                        </group>
 
                         <!-- Notas y Comentarios -->
                         <group string="Notas y Comentarios" col="2">

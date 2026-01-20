@@ -33,6 +33,32 @@ class Reparacion(models.Model):
     )
     producto_id = fields.Many2one('joyeria.producto', string='Producto a reparar', required=False)
     
+    # Código que ingresa la vendedora
+    codigo_ingresado = fields.Char(
+        string="Código ingresado",
+        help="Código entregado por administración.",
+        store=True
+    )
+    
+    # Código generado por administración
+    auth_code_id = fields.Many2one(
+        "joyeria.reparacion.authcode",
+        string="Código seleccionado por administración",
+        domain="[('used','=',False)]",
+        groups="base.group_system",  # solo admins lo ven
+    )
+
+
+    requiere_autorizacion = fields.Boolean(
+        string="Requiere autorización",
+        compute="_compute_requiere_autorizacion",
+        store=True
+    )
+    codigo_autorizacion_id = fields.Many2one(
+    "joyeria.reparacion.authcode",
+    string="Código autorizado",
+    readonly=True
+    )
     modelo = fields.Char(string='Modelo', required=False)
     cliente_id = fields.Many2one('res.partner', string='Nombre y apellido del Cliente', required=True)
     nombre_cliente = fields.Char(string='Nombre y apellido del cliente', required=False)
@@ -425,7 +451,7 @@ class Reparacion(models.Model):
             if vendedora:
                 self.vendedora_id = vendedora.id
 
-# ###create funcional######
+# ###create funcional(se modifica)######
     @api.model
     def create(self, vals):
         ahora = datetime.now(CHILE_TZ).strftime('%d/%m/%Y %H:%M:%S')
@@ -434,20 +460,90 @@ class Reparacion(models.Model):
         is_admin = self.env.uid == SUPERUSER_ID or self.env.user.has_group('base.group_system')
         is_import = bool(self.env.context.get('import_file') or self.env.context.get('from_import'))
 
-        # ✅ Validar peso especial
+         # ============================================================
+        # 🔐 VALIDACIÓN DE AUTORIZACIÓN PARA RMA SIN COSTO
+        # ============================================================
+
+        # Tomar valores reales que tendrá el registro (vals o default 0)
+        precio_unitario = vals.get("precio_unitario", 0) or 0
+        extra = vals.get("extra", 0) or 0
+        extra2 = vals.get("extra2", 0) or 0
+        extra3 = vals.get("extra3", 0) or 0
+        abono = vals.get("abono", 0) or 0
+        saldo = vals.get("saldo", 0) or 0
+
+        # Detectar RMA sin costo REAL
+        precio0 = (
+            precio_unitario == 0 and
+            extra == 0 and
+            extra2 == 0 and
+            extra3 == 0 and
+            abono == 0 and
+            saldo == 0
+        )
+
+        if precio0 and not is_admin:
+            _logger = logging.getLogger(__name__)
+            _logger.warning("===== DEBUG AUTORIZACIÓN CREA =====")
+            _logger.warning("VALS codigo_ingresado = %s", vals.get("codigo_ingresado"))
+            _logger.warning("CÓDIGOS EN BD:")
+            for c in self.env["joyeria.reparacion.authcode"].search([]):
+                _logger.warning("ID %s | '%s' | used=%s", c.id, repr(c.codigo), c.used)
+            _logger.warning("====================================")
+
+            # Código ingresado por la vendedora
+            codigo_ing = vals.get("codigo_ingresado")
+            if not codigo_ing:
+                codigo_ing = self._context.get("codigo_ingresado") or ""
+            codigo_ing = str(codigo_ing).strip().upper()
+
+            if not codigo_ing:
+                raise ValidationError("❌ Debes ingresar un código de autorización para reparaciones sin costo.")
+
+            # Buscar código válido sin usar
+            codigo_ing_norm = codigo_ing.strip().upper()
+
+            # Buscar todos los códigos no usados
+            codes = self.env["joyeria.reparacion.authcode"].search([
+                ('used', '=', False)
+            ])
+
+            # Comparar uno por uno normalizando
+            code = next(
+                (c for c in codes if (c.codigo or "").strip().upper() == codigo_ing_norm),
+                False
+            )
+
+            if not code:
+                raise ValidationError("❌ El código ingresado no existe o ya fue utilizado.")
+
+            # Marcar como usado
+            code.write({
+                'used': True,
+                'usado_por_id': self.env.uid,
+                'fecha_uso': datetime.now()
+            })
+
+            # Asociar código validado al RMA
+            vals["codigo_autorizacion_id"] = code.id
+
+
+        # ============================================================
+        # ⚙️ LÓGICA EXISTENTE — NO TOCAR
+        # ============================================================
+
+        # Validación de peso especial
         if (not is_admin) and (not is_import) and vals.get('peso') == 'especial' and not vals.get('peso_valor'):
             raise ValidationError("Debe ingresar un valor para el campo 'Peso' si selecciona tipo de peso 'Especial'.")
 
-        # ✅ Generar secuencia si corresponde
+        # Generar secuencia
         if vals.get('name', 'Nuevo') == 'Nuevo':
             secuencia = self.env['ir.sequence'].next_by_code('joyeria.reparacion')
             if not secuencia:
                 raise ValidationError("No se pudo generar la secuencia.")
             vals['name'] = secuencia.replace("'", "-")
 
-        # ----------------------------------------------------------
-        # ⚙️ PROCESAR QR DE QUIEN RECIBE (vendedora)
-        # ----------------------------------------------------------
+        # Procesar QR quien recibe
         if not vals.get('vendedora_id') and vals.get('clave_autenticacion_manual'):
             clave = str(vals['clave_autenticacion_manual']).strip().upper()
             vendedora = self.env['joyeria.vendedora'].search([
@@ -460,9 +556,7 @@ class Reparacion(models.Model):
                 vals['vendedora_id'] = vendedora.id
                 mensajes.append(f"📦 Recibido por: <b>{vendedora.name}</b> el <b>{ahora}</b>")
 
-        # ----------------------------------------------------------
-        # ⚙️ PROCESAR QR DE QUIEN RETIRA (firma)
-        # ----------------------------------------------------------
+        # Procesar QR quien retira
         if not vals.get('firma_id') and vals.get('clave_firma_manual'):
             clave = str(vals['clave_firma_manual']).strip().upper()
             vendedora_firma = self.env['joyeria.vendedora'].search([
@@ -478,16 +572,21 @@ class Reparacion(models.Model):
                 vals['fecha_firma'] = ahora_utc_naive
                 mensajes.append(f"✍️ Retirado por: <b>{vendedora_firma.name}</b> el <b>{ahora}</b>")
 
-        # ----------------------------------------------------------
-        # CREAR REGISTRO
-        # ----------------------------------------------------------
+        # Validaciones QR
+        if vals.get('clave_autenticacion_manual') and not vals.get('vendedora_id'):
+            raise ValidationError("❌ Clave inválida: No se encontró ninguna vendedora con esa clave (quien recibe).")
+
+        if vals.get('clave_firma_manual') and not vals.get('firma_id'):
+            raise ValidationError("❌ Clave inválida: No se encontró ninguna vendedora con esa clave (quien retira).")
+
+        # Crear registro
         record = super().create(vals)
 
-        # ✅ Generar QR de la reparación
+        # Generar QR reparación
         if hasattr(record, '_generar_codigo_qr'):
             record._generar_codigo_qr()
 
-        # ✅ Mensaje resumen general
+        # Resumen
         peso_str = str(record.peso_valor) if record.peso_valor not in (False, 0, 0.0) else "No especificado"
         resumen = (
             "📌 Resumen generado automáticamente\n"
@@ -500,7 +599,6 @@ class Reparacion(models.Model):
         )
         mensajes.append(resumen)
 
-        # ✅ Publicar mensajes en el chatter
         for msg in mensajes:
             record.message_post(body=msg)
 
@@ -571,26 +669,50 @@ class Reparacion(models.Model):
     def write(self, vals):
         is_admin = self.env.uid == SUPERUSER_ID or self.env.user.has_group('base.group_system')
 
-        # Validaciones SOLO para usuarios NO admin
+        # ============================================================
+        # 🔧 VALIDACIONES EXISTENTES (NO TOCAR)
+        # ============================================================
         if not is_admin:
             for rec in self:
-                # No permitir cambiar el tipo de peso una vez creado
                 if 'peso' in vals and vals['peso'] != rec.peso:
                     raise ValidationError("No se permite cambiar el tipo de peso una vez creado el registro.")
-                # Si en el futuro reactivas la validación de peso_valor, quedaría aquí análoga
 
-        res = super().write(vals)
-
+        # ============================================================
+        # 📲 PROCESAR QR — NO SE TOCA
+        # ============================================================
         for rec in self:
-            # ✍️ Procesar firma si se ingresó clave
-            if vals.get('clave_firma_manual'):
-                rec._procesar_firma()
 
-            # 📦 Procesar vendedora si se ingresó clave
+            # Recepción por QR
             if vals.get('clave_autenticacion_manual'):
-                rec._procesar_vendedora()
+                clave = vals['clave_autenticacion_manual'].strip().upper()
+                vendedora = rec.env['joyeria.vendedora'].search([
+                    '|', '|',
+                    ('clave_autenticacion', '=', clave),
+                    ('clave_qr', '=', clave),
+                    ('codigo_qr', '=', clave),
+                ], limit=1)
+                if vendedora:
+                    vals['vendedora_id'] = vendedora.id
 
-        return res
+            # Firma por QR
+            if vals.get('clave_firma_manual'):
+                clave = vals['clave_firma_manual'].strip().upper()
+                vendedora_firma = rec.env['joyeria.vendedora'].search([
+                    '|', '|',
+                    ('clave_autenticacion', '=', clave),
+                    ('clave_qr', '=', clave),
+                    ('codigo_qr', '=', clave),
+                ], limit=1)
+                if vendedora_firma:
+                    vals['firma_id'] = vendedora_firma.id
+                    ahora_chile = datetime.now(pytz.timezone('America/Santiago'))
+                    ahora_utc_naive = ahora_chile.astimezone(pytz.UTC).replace(tzinfo=None)
+                    vals['fecha_firma'] = ahora_utc_naive
+
+        # ============================================================
+        # ✔ GUARDAR CAMBIOS
+        # ============================================================
+        return super().write(vals)
 
     def imprimir_reporte_responsables(self):
         # Rango de fechas fijo, puedes cambiarlo más adelante a dinámico
