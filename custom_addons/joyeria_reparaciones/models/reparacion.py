@@ -195,6 +195,28 @@ class Reparacion(models.Model):
     fecha_firma = fields.Datetime(string='Fecha de firma', readonly=True)
     clave_firma_manual = fields.Char(string='QR de quien retira')
 
+    @api.depends('precio_unitario', 'extra', 'extra2', 'extra3', 'abono', 'saldo')
+    def _compute_requiere_autorizacion(self):
+        for rec in self:
+
+            # Convertir None/False/vacío en 0
+            precio_unitario = rec.precio_unitario or 0
+            extra = rec.extra or 0
+            extra2 = rec.extra2 or 0
+            extra3 = rec.extra3 or 0
+            abono = rec.abono or 0
+            saldo = rec.saldo or 0
+
+            # Solo requiere autorización si REALMENTE todo es 0
+            rec.requiere_autorizacion = (
+                precio_unitario == 0 and
+                extra == 0 and
+                extra2 == 0 and
+                extra3 == 0 and
+                abono == 0 and
+                saldo == 0
+            )
+
     @staticmethod
     def _normalize_name(name):
         """Normaliza el nombre: minúsculas, sin tildes, espacios simples."""
