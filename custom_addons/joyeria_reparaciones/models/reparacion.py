@@ -84,6 +84,7 @@ class Reparacion(models.Model):
         ('local 584', 'Monjitas 873, Local 584, Santiago Centro, Metro Plaza de Armas'),
         ('local maipu', 'Jumbo, Av. Los Pajaritos 3302 (Local Maipú), Metro Santiago Bueras')
     ], string='Dirección de entrega', required=True)
+
     vencimiento_garantia = fields.Date(string='Vencimiento de la garantía',compute='_compute_vencimiento_garantia',store=True)
     fecha_entrega = fields.Date(string='Fecha de entrega', tracking=True)
     responsable_id = fields.Many2one('res.users', string="Responsable", default=False, tracking=True)
