@@ -242,22 +242,9 @@ class Reparacion(models.Model):
 
     @api.onchange('local_tienda')
     def _onchange_local_tienda(self):
-        """Actualiza dirección al elegir tienda.
-        - Maipú: dirección especial
-        - Resto: misma base con el nombre de local seleccionado
-        """
         for rec in self:
-            if not rec.local_tienda:
-                continue
-
-            # Obtener la ETIQUETA visible del selection (p.ej. 'Local 906')
-            label = dict(rec._fields['local_tienda'].selection).get(rec.local_tienda, rec.local_tienda)
-
-            if rec.local_tienda == 'local maipu':
-                rec.direccion_entrega = "Local Maipú, Jumbo, Av. Los Pajaritos 3302, Metro Santiago Bueras"
-            else:
-                # Ej: "Paseo Estado 344, Local 921, Santiago Centro, Metro Plaza de Armas (Galería Pasaje Matte)"
-                rec.direccion_entrega = f"{label}, Paseo Estado 344, Santiago Centro, Metro Plaza de Armas (Galería Pasaje Matte)"
+            if rec.local_tienda:
+                rec.direccion_entrega = rec.local_tienda
 
     @api.onchange('responsable_id')
     def _onchange_responsable_id(self):
@@ -654,7 +641,7 @@ class Reparacion(models.Model):
             self.apellido_cliente = partes[1] if len(partes) > 1 else ''
             self.correo_cliente = self.cliente_id.email or ''
             self.telefono = self.cliente_id.phone or ''
-            self.direccion_entrega = self.cliente_id.street or ''
+
 
 
     @api.model
