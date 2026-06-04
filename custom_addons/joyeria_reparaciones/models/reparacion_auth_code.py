@@ -13,6 +13,18 @@ class ReparacionAuthCode(models.Model):
     codigo = fields.Char(string="Código", readonly=True)
     used = fields.Boolean(string="Usado", default=False)
 
+    reparacion_id = fields.Many2one(
+        "joyeria.reparacion",
+        string="RMA",
+        readonly=True
+    )
+
+    reparacion_name = fields.Char(
+        string="N° RMA",
+        related="reparacion_id.name",
+        store=True
+    )
+
     fecha_creacion = fields.Datetime(
         string="Fecha creación",
         default=lambda self: fields.Datetime.now(),
@@ -21,6 +33,13 @@ class ReparacionAuthCode(models.Model):
 
     usado_por_id = fields.Many2one("res.users", string="Usado por", readonly=True)
     fecha_uso = fields.Datetime("Fecha de uso", readonly=True)
+
+    # 🔥 NUEVO: RELACIÓN AL RMA
+    reparacion_id = fields.Many2one(
+        "joyeria.reparacion",
+        string="RMA asociado",
+        readonly=True
+    )
 
     tiempo_restante = fields.Char(
         string="Tiempo restante",
@@ -59,7 +78,7 @@ class ReparacionAuthCode(models.Model):
                 fecha_ini = pytz.UTC.localize(fecha_ini)
 
             ahora = datetime.now(pytz.UTC)
-            expira = fecha_ini + timedelta(hours=1)  # ✔ EXPIRA EN 1 HORA
+            expira = fecha_ini + timedelta(hours=1)
 
             diff = expira - ahora
 
@@ -71,7 +90,7 @@ class ReparacionAuthCode(models.Model):
                 rec.tiempo_restante = f"⏳ {minutos} min {segundos} seg"
 
     # ============================
-    # EXPIRACIÓN AUTOMÁTICA
+    # EXPIRACIÓN
     # ============================
     @api.depends("fecha_creacion")
     def _compute_expired(self):
@@ -88,16 +107,9 @@ class ReparacionAuthCode(models.Model):
             ahora = datetime.now(pytz.UTC)
             expira = fecha_ini + timedelta(hours=1)
 
-            if ahora >= expira:
-                code.expired = True
-            else:
-                code.expired = False
+            code.expired = ahora >= expira
 
-    # ============================
-    # VERIFICAR EXPIRACIÓN MANUAL
-    # ============================
     def check_expired(self):
-        """Forzar revisión de expiración antes de validar un RMA."""
         for code in self:
             fecha_ini = code.fecha_creacion
             if fecha_ini.tzinfo is None:
@@ -111,9 +123,6 @@ class ReparacionAuthCode(models.Model):
 
         return True
 
-    # ============================
-    # CREACIÓN DEL REGISTRO
-    # ============================
     @api.model
     def create(self, vals):
         rec = super().create(vals)
