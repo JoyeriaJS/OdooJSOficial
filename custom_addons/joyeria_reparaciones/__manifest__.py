@@ -11,7 +11,7 @@
         'views/reparacion_js.xml',
         #'data/ir_sequence_data.xml',
         #'data/joyeria_data.xml',
-        #'report/report_qrcode_template.xml',
+        'report/report_qrcode_template.xml',
         #'report/report.xml',  # ← este es el que importa
         #'report/reporte_responsable_report.xml',
         #'static/src/reparacion_form.js',
