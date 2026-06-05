@@ -33,7 +33,7 @@ class Reparacion(models.Model):
     )
     producto_id = fields.Many2one('joyeria.producto', string='Producto a reparar', required=False)
 
-    # Código que ingresa la vendedora
+      # Código que ingresa la vendedora
     codigo_ingresado = fields.Char(
         string="Código ingresado",
         help="Código entregado por administración.",
@@ -54,17 +54,17 @@ class Reparacion(models.Model):
         string="Requiere autorización",
         compute="_compute_requiere_autorizacion",
         store=True
-    )
+)
     codigo_autorizacion_id = fields.Many2one(
     "joyeria.reparacion.authcode",
     string="Código autorizado",
     readonly=True
-    )
+)
     costo_cero_definitivo = fields.Boolean(
     string="Es RMA sin costo",
     default=False,
     readonly=True
-    )
+)
     
     modelo = fields.Char(string='Modelo', required=False)
     cliente_id = fields.Many2one('res.partner', string='Nombre y apellido del Cliente', required=True)
@@ -397,6 +397,15 @@ class Reparacion(models.Model):
     def _compute_saldo(self):
         for rec in self:
             rec.saldo = rec.subtotal - rec.abono
+
+    #egregada
+    @api.depends('subtotal')
+    def _compute_requiere_autorizacion(self):
+        for rec in self:
+            rec.requiere_autorizacion = (
+                rec.subtotal == 0
+                and not rec.costo_cero_definitivo
+            )
 
 
     @api.depends('gramos_utilizado', 'metales_extra')
