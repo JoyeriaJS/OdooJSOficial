@@ -46,7 +46,7 @@ class Reparacion(models.Model):
         ('local 329', 'Paseo Estado 344, Local 329, Santiago Centro, Metro Plaza de Armas (Galería Pasaje Matte)'),
         ('local 325', 'Paseo Estado 344, Local 325, Santiago Centro, Metro Plaza de Armas (Galería Pasaje Matte)'),
         ('local 383 online', 'Paseo Estado 344, Local 383 Online, Santiago Centro, Metro Plaza de Armas (Galería Pasaje Matte)'),
-        ('local 921', 'Paseo Estado 344, Local 921, Santiago Centro, Metro Plaza de Armas (Galería Pasaje Matte)'),
+        ('local 921', 'Huérfanos 921 (Galería Matte), Santiago Centro, Metro Plaza de Armas'),
         ('local 584', 'Monjitas 873, Local 584, Santiago Centro, Metro Plaza de Armas'),
         ('local maipu', 'Jumbo, Av. Los Pajaritos 3302 (Local Maipú), Metro Santiago Bueras')
     ], string='Dirección de entrega', required=True)
