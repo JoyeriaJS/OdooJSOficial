@@ -534,8 +534,8 @@ class Reparacion(models.Model):
             code.write({
                 'used': True,
                 'usado_por_id': self.env.uid,
-                'fecha_uso': datetime.now(),
-                'reparacion_id': record.id
+                'fecha_uso': datetime.now()
+                
             })
 
             vals["codigo_autorizacion_id"] = code.id
