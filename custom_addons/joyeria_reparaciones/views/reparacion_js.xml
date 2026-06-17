@@ -293,6 +293,7 @@
                             <field name="abono"/>
                             <field name="saldo" readonly="1"/>
                         </group>
+                    </group>
 
 
 
@@ -339,7 +340,6 @@
 
                         
                     </div>
-                </group>
                 </sheet>
             </form>
         </field>
