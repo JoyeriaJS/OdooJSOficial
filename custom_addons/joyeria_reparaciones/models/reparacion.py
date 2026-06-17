@@ -198,41 +198,6 @@ class Reparacion(models.Model):
 
 
     metales_extra = fields.Float("Metales extra(gr)")
-    valor_extra = fields.Float("Valor Extra")
-    valor_brillante = fields.Float("Valor Brillante")
-    valor_moissanita = fields.Float("Valor Moissanita")
-    valor_metal = fields.Float("Valor Metal")
-    
-    gramos_utilizado = fields.Float("Gramos utilizados(gr)")
-    rodinado_cantidad = fields.Float()
-    rodinado_valor = fields.Float()
-    tipo_diseno = fields.Selection([
-    ('nuevo','Nuevo'),
-    ('antiguo','Antiguo')
-    ])
-    tipo_vector = fields.Selection([
-        ('nuevo','Nuevo'),
-        ('antiguo','Antiguo')
-    ])
-
-    cantidad_brillantes_manual = fields.Float()
-    valor_brillante_unitario = fields.Float()
-    cantidad_moissanita_manual = fields.Float()
-    valor_moissanita_unitario = fields.Float()
-    metales_extra = fields.Float("Metales extra(gr)")
-    rodinado_cantidad = fields.Float()
-    rodinado_valor = fields.Float()
-    otro_taller = fields.Float()
-    #reparacion
-    soldadura_cantidad = fields.Float()
-    soldadura_valor = fields.Float()
-    piedras_cantidad = fields.Float()
-    piedras_valor = fields.Float()
-    rodinado_bano_cantidad = fields.Float()
-    rodinado_bano_valor = fields.Float()
-    otro_reparacion = fields.Float()
-
-
 
     cobro_interno = fields.Float("Cobro interno")
     hechura = fields.Float("Hechura")
@@ -240,206 +205,12 @@ class Reparacion(models.Model):
     total_salida_taller = fields.Float("Total salida del taller", compute="_compute_total_salida", store=True)
     peso_total = fields.Float("Peso total", compute="_compute_peso_total", store=True)
 
-    tipo_trabajo = fields.Selection([
-    ('diseno_3d', 'Diseño 3D'),
-    ('vector', 'Vector'),
-    ('argollas', 'Argollas')
-    ], string="Tipo de trabajo")
-
-    subtipo = fields.Selection([
-        ('nuevo', 'Nuevo'),
-        ('existente', 'Existente/Web')
-    ], string="Subtipo")
-
-    cantidad_circones = fields.Float("Cantidad circones")
-    lleva_brillantes = fields.Boolean("Brillantes")
-    cantidad_brillantes = fields.Integer("Cantidad brillantes")
-    lleva_moissanitas = fields.Boolean("Moissanitas")
-    cantidad_moissanitas = fields.Integer("Cantidad moissanitas")
-    es_vector_nuevo = fields.Boolean("Vector nuevo")
-    rodinado = fields.Boolean("Rodinado")
-
-
 
     #firma_salida_id = fields.Many2one('joyeria.vendedora', string="Firma salida del taller", readonly=True)
     #fecha_salida_taller = fields.Datetime("🕒 Fecha y hora de salida", readonly=True)
     firma_id = fields.Many2one('joyeria.vendedora', string='Retirado por', readonly=True, tracking=True)
     fecha_firma = fields.Datetime(string='Fecha de firma', readonly=True)
     clave_firma_manual = fields.Char(string='QR de quien retira')
-
-    @api.depends(
-        'servicio',
-        'metal_utilizado',
-        'gramos_utilizado',
-
-
-        # FABRICACION
-        'tipo_diseno',
-        'tipo_vector',
-        'cantidad',
-        'cantidad_circones',
-
-        'cantidad_brillantes_manual',
-        'valor_brillante_unitario',
-
-        'cantidad_moissanita_manual',
-        'valor_moissanita_unitario',
-
-        'rodinado_cantidad',
-        'rodinado_valor',
-
-        'otro_taller',
-
-        # REPARACION
-        'valor_metal',
-        'soldadura_cantidad',
-        'soldadura_valor',
-
-        'piedras_cantidad',
-        'piedras_valor',
-
-        'rodinado_bano_cantidad',
-        'rodinado_bano_valor',
-
-        'otro_reparacion'
-    )
-    def _compute_costos_taller(self):
-
-        for rec in self:
-
-            cobro = 0
-            hechura = 0
-            extras = 0
-
-            # ====================================================
-            # FABRICACION
-            # ====================================================
-            if rec.servicio == 'fabricacion':
-
-                #Metal
-                hechura += (
-                    (rec.gramos_utilizado or 0)
-                    * (rec.valor_metal or 0)
-
-                )
-
-                # --------------------------------
-                # METAL
-                # --------------------------------
-                #if rec.metal_utilizado == 'plata':
-                    #hechura += (rec.gramos_utilizado or 0) * 2300
-
-                #elif rec.metal_utilizado == 'oro 18k blanco':
-                    #hechura += (rec.gramos_utilizado or 0) * 101000
-
-                # si después quieren precio para rosado o amarillo
-                # aquí lo agregamos
-
-                # --------------------------------
-                # DISEÑO
-                # --------------------------------
-                if rec.tipo_diseno == 'nuevo':
-                    cobro += 16000
-
-                elif rec.tipo_diseno == 'antiguo':
-                    cobro += 4000
-
-                # --------------------------------
-                # VECTOR
-                # --------------------------------
-                if rec.tipo_vector == 'nuevo':
-                    cobro += 4000
-
-                elif rec.tipo_vector == 'antiguo':
-                    cobro += 2000
-
-                # --------------------------------
-                # ARGOLLAS
-                # 0.5 = una argolla = 3000
-                # 1.0 = par = 6000
-                # --------------------------------
-                if rec.tipo_joya == 'argolla':
-                    extras += (rec.cantidad or 0) * 6000
-
-                # --------------------------------
-                # CIRCONES
-                # --------------------------------
-                extras += (
-                    (rec.cantidad_circones or 0) * 
-                    (rec.piedras_valor or 0)
-                )
-
-                # --------------------------------
-                # BRILLANTES
-                # --------------------------------
-                extras += (
-                    (rec.cantidad_brillantes_manual or 0)
-                    * (rec.valor_brillante_unitario or 0)
-                )
-
-                # --------------------------------
-                # MOISSANITAS
-                # --------------------------------
-                extras += (
-                    (rec.cantidad_moissanita_manual or 0)
-                    * (rec.valor_moissanita_unitario or 0)
-                )
-
-                # --------------------------------
-                # RODINADO
-                # --------------------------------
-                extras += (
-                    (rec.rodinado_cantidad or 0)
-                    * (rec.rodinado_valor or 0)
-                )
-
-                # --------------------------------
-                # OTRO
-                # --------------------------------
-                extras += rec.otro_taller or 0
-
-            # ====================================================
-            # REPARACION
-            # ====================================================
-            elif rec.servicio == 'reparacion':
-
-
-                # SOLDADURA
-                extras += (
-                    (rec.soldadura_cantidad or 0)
-                    * (rec.soldadura_valor or 0)
-                )
-
-                # PIEDRAS
-                extras += (
-                    (rec.piedras_cantidad or 0)
-                    * (rec.piedras_valor or 0)
-                )
-
-                # BRILLANTES
-                extras += (
-                    (rec.cantidad_brillantes_manual or 0)
-                    * (rec.valor_brillante_unitario or 0)
-                )
-
-                # MOISSANITAS
-                extras += (
-                    (rec.cantidad_moissanita_manual or 0)
-                    * (rec.valor_moissanita_unitario or 0)
-                )
-
-                # RODINADO / BAÑO
-                extras += (
-                    (rec.rodinado_bano_cantidad or 0)
-                    * (rec.rodinado_bano_valor or 0)
-                )
-
-                # OTRO
-                extras += rec.otro_reparacion or 0
-
-            rec.cobro_interno = cobro
-            rec.hechura = hechura
-            rec.cobros_extras = extras
 
     @staticmethod
     def _normalize_name(name):
@@ -622,8 +393,6 @@ class Reparacion(models.Model):
         for rec in self:
             rec.subtotal = rec.cantidad * rec.precio_unitario + rec.extra + rec.extra2 + rec.extra3
 
-    
-
     @api.depends('subtotal', 'abono')
     def _compute_saldo(self):
         for rec in self:
@@ -652,18 +421,10 @@ class Reparacion(models.Model):
          #       raise ValidationError("Debe ingresar un valor para el peso si selecciona tipo 'Especial'.")
         #return super().write(vals)
 
-    @api.depends('cobro_interno', 'hechura', 'cobros_extras',
-                 'metal_utilizado','valor_extra','valor_brillante','valor_moissanita',
-    'tipo_trabajo',
-    'subtipo',
-    'cantidad_circones',
-    'gramos_utilizado',
-    'lleva_brillantes',
-    'lleva_moissanitas',
-    'es_vector_nuevo') #'otros_total' #'oro_rosado_total', 'oro_amarillo_total', 'plata_total')
+    @api.depends('cobro_interno', 'hechura', 'cobros_extras')
     def _compute_total_salida(self):
         for rec in self:
-            rec.total_salida_taller = (rec.cobro_interno or 0) + (rec.hechura or 0) + (rec.cobros_extras or 0) + (rec.valor_extra or 0) + (rec.valor_brillante or 0) + (rec.valor_moissanita)
+            rec.total_salida_taller = (rec.cobro_interno or 0) + (rec.hechura or 0) + (rec.cobros_extras or 0)
 
     @api.onchange('clave_firma_manual')
     def _onchange_clave_firma_manual(self):
