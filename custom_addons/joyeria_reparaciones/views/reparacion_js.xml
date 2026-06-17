@@ -314,7 +314,7 @@
                         <group string="Notas de Administración">
                             <field name="comentarios"/>
                         </group>
-                        
+
                     </group>
 
                     <!-- Pestaña Operaciones -->
@@ -339,6 +339,7 @@
 
                         
                     </div>
+                </group>
                 </sheet>
             </form>
         </field>
