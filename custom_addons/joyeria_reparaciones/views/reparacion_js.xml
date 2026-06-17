@@ -306,10 +306,16 @@
                     </group>
 
                         <!-- Notas y Comentarios -->
-                        <group string="Notas y Comentarios" col="2">
-                            <field name="notas"/>
-                            <field name="comentarios"/>
-                        </group>
+                        <group string="Notas y Comentarios"
+                           col="2">
+                    <group string="Notas del Vendedor">
+                        <field name="nombre_nota_vendedor"/>
+                        <field name="notas"/>
+                    </group>
+                    <group string="Notas de Administración">
+                        <field name="comentarios"/>
+                    </group>
+
                     </group>
 
                     <!-- Pestaña Operaciones -->
