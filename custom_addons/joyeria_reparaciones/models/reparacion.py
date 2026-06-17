@@ -173,7 +173,8 @@ class Reparacion(models.Model):
     estado = fields.Selection([
         ('presupuesto', 'Presupuesto'),
         ('reparado', 'Reparado'),
-        ('reparado y entregado', 'Reparado y Entregado'),
+        ('reparado y entregado', 'Reparado y Entregado a local'),
+        ('entregado a cliente', 'Entregado a Cliente'),
         ('confirmado', 'Confirmado'),
         ('cancelado', 'Cancelado')
     ], string='Estado', default='presupuesto', tracking=True, required=True, store=True, readonly=False)
@@ -436,20 +437,42 @@ class Reparacion(models.Model):
                 # --------------------------------
                 # DISEÑO
                 # --------------------------------
+                # --------------------------------
+                # DISEÑO
+                # --------------------------------
+
+                cantidad = rec.cantidad or 1
+
                 if rec.tipo_diseno == 'nuevo':
-                    cobro += 16000
+                    cobro += 16000 * cantidad
 
                 elif rec.tipo_diseno == 'antiguo':
-                    cobro += 4000
+                    cobro += 4000 * cantidad
+
 
                 # --------------------------------
                 # VECTOR
                 # --------------------------------
-                if rec.tipo_vector == 'nuevo':
-                    cobro += 4000
 
-                elif rec.tipo_vector == 'antiguo':
-                    cobro += 2000
+                if rec.metal_utilizado == 'plata':
+
+                    if rec.tipo_vector == 'nuevo':
+                        cobro += 2000 * cantidad
+
+                    elif rec.tipo_vector == 'antiguo':
+                        cobro += 2000 * cantidad
+
+                elif rec.metal_utilizado in [
+                    'oro 18k amarillo',
+                    'oro 18k rosado',
+                    'oro 18k blanco'
+                ]:
+
+                    if rec.tipo_vector == 'nuevo':
+                        cobro += 4000 * cantidad
+
+                    elif rec.tipo_vector == 'antiguo':
+                        cobro += 2000 * cantidad
 
                 # --------------------------------
                 # ARGOLLAS
@@ -550,6 +573,16 @@ class Reparacion(models.Model):
             # Si no tenía responsable en BD y ahora sí se asignó, auto-confirmar
             if (not prev_tenía_responsable) and rec.responsable_id and rec.estado != 'confirmado':
                 rec.estado = 'confirmado'
+
+    @api.onchange('metal_utilizado')
+    def _onchange_metal_utilizado_auto_reparado(self):
+        for rec in self:
+            # Valor persistido antes del cambio
+            prev_tenia_metal = bool(rec._origin.metal_utilizado) if rec._origin and rec._origin.id else False
+
+            # Si antes no tenía metal y ahora sí, marcar como reparado
+            if (not prev_tenia_metal) and rec.metal_utilizado and rec.estado != 'reparado':
+                rec.estado = 'reparado'
     
     @api.onchange('clave_firma_manual')
     def _onchange_firma_auto_entregado_first_time(self):
