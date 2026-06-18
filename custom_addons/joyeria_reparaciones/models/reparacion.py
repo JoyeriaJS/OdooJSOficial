@@ -443,11 +443,25 @@ class Reparacion(models.Model):
 
                 cantidad = rec.cantidad or 1
 
-                if rec.tipo_diseno == 'nuevo':
-                    cobro += 16000 * cantidad
+                if rec.metal_utilizado == 'plata':
 
-                elif rec.tipo_diseno == 'antiguo':
-                    cobro += 4000 * cantidad
+                    if rec.tipo_diseno == 'nuevo':
+                        cobro += 16000 * cantidad
+
+                    elif rec.tipo_diseno == 'antiguo':
+                        cobro += 2000 * cantidad
+
+                elif rec.metal_utilizado in [
+                    'oro 18k amarillo',
+                    'oro 18k blanco',
+                    'oro 18k rosado'
+                ]:
+
+                    if rec.tipo_diseno == 'nuevo':
+                        cobro += 16000 * cantidad
+
+                    elif rec.tipo_diseno == 'antiguo':
+                        cobro += 4000 * cantidad
 
 
                 # --------------------------------
