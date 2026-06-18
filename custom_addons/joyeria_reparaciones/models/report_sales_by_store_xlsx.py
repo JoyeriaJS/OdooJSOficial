@@ -42,6 +42,10 @@ class ReportSalesByStoreXlsx(models.AbstractModel):
             'num_format': '#,##0'
         })
 
+        weight = workbook.add_format({
+            'num_format': '#,##0.00'
+        })
+
         datef = workbook.add_format({
             'num_format': 'dd/mm/yyyy'
         })
@@ -50,6 +54,12 @@ class ReportSalesByStoreXlsx(models.AbstractModel):
             'bold': True,
             'bg_color': '#D9EAD3',
             'num_format': '#,##0'
+        })
+
+        total_weight = workbook.add_format({
+            'bold': True,
+            'bg_color': '#D9EAD3',
+            'num_format': '#,##0.00'
         })
 
         headers = [
@@ -124,7 +134,7 @@ class ReportSalesByStoreXlsx(models.AbstractModel):
             row += 1
 
             sheet.write(row, 0, "Total Gramos")
-            sheet.write_number(row, 1, total_gramos_local, money)
+            sheet.write_number(row, 1, total_gramos_local, weight)
             row += 1
 
             sheet.write(row, 0, "Total Cobro Interno")
@@ -235,7 +245,7 @@ class ReportSalesByStoreXlsx(models.AbstractModel):
                         row,
                         3,
                         gramos,
-                        money
+                        weight
                     )
 
                     sheet.write_number(
@@ -279,7 +289,7 @@ class ReportSalesByStoreXlsx(models.AbstractModel):
                     total_format
                 )
 
-                sheet.write_number(row, 3, tot_gramos, total_format)
+                sheet.write_number(row, 3, tot_gramos, total_weight)
                 sheet.write_number(row, 4, tot_ci, total_format)
                 sheet.write_number(row, 5, tot_he, total_format)
                 sheet.write_number(row, 6, tot_ce, total_format)
