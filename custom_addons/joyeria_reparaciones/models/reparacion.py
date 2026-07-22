@@ -493,8 +493,8 @@ class Reparacion(models.Model):
                 # 0.5 = una argolla = 3000
                 # 1.0 = par = 6000
                 # --------------------------------
-                if rec.tipo_joya == 'argolla':
-                    extras += (rec.cantidad or 0) * 6000
+                #if rec.tipo_joya == 'argolla':
+                 #-   extras += (rec.cantidad or 0) * 6000
 
                 # --------------------------------
                 # CIRCONES
