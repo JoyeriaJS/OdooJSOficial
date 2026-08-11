@@ -52,7 +52,7 @@
           <t t-if="o.n_cm_fabricacion">
             <p><strong>Talla Fabricacion:</strong> <t t-esc="o.n_cm_fabricacion"/></p>
           </t>
-          <p><strong>Precio:</strong> <t t-esc="o.precio_unitario"/></p>
+          <p><strong>Precio:</strong> <t t-esc="o.subtotal"/></p>
           <p><strong>Abono:</strong> <t t-esc="o.abono"/></p>
           <p><strong>Saldo:</strong> <t t-esc="o.saldo"/></p>
           <p><strong>Ingreso:</strong> <t t-esc="o.fecha_recepcion"/></p>

@@ -215,7 +215,9 @@ class Reparacion(models.Model):
     ])
     tipo_vector = fields.Selection([
         ('nuevo','Nuevo'),
-        ('antiguo','Antiguo')
+        ('antiguo','Antiguo') ,
+        ('argolla', 'Argolla')
+
     ])
 
     cantidad_brillantes_manual = fields.Float()
@@ -471,15 +473,19 @@ class Reparacion(models.Model):
                 if rec.metal_utilizado == 'plata':
 
                     if rec.tipo_vector == 'nuevo':
-                        cobro += 2000 * cantidad
+                        cobro += 4000 * cantidad
 
                     elif rec.tipo_vector == 'antiguo':
                         cobro += 2000 * cantidad
+                        
+                    elif rec.tipo_vector == 'argolla':
+                        cobro += 7000 * cantidad
 
                 elif rec.metal_utilizado in [
                     'oro 18k amarillo',
                     'oro 18k rosado',
-                    'oro 18k blanco'
+                    'oro 18k blanco',
+                    'otros'
                 ]:
 
                     if rec.tipo_vector == 'nuevo':
@@ -487,6 +493,9 @@ class Reparacion(models.Model):
 
                     elif rec.tipo_vector == 'antiguo':
                         cobro += 2000 * cantidad
+
+                    elif rec.tipo_vector == 'argolla':
+                        cobro += 7000 * cantidad
 
                 # --------------------------------
                 # ARGOLLAS
