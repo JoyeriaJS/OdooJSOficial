@@ -359,7 +359,7 @@
                 <field name="tipo_joya" string="Producto a reparar"/>
                 <field name="cliente_id" string="Cliente"/>
                 <field name="direccion_entrega" string="Dirección de entrega"/>
-                <field name="vencimiento_garantia" string="Vencimiento de la garantía"/>
+                <field name="fecha_entrega" string="Fecha de Entrega"/>
                 <field name="estado" string="Estado"/>
             </tree>
         </field>
