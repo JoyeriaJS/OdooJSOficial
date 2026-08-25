@@ -1,3 +1,4 @@
+
 # -*- coding: utf-8 -*-
 from odoo import models
 from collections import OrderedDict
@@ -97,6 +98,11 @@ class ReportSalesByStoreXlsx(models.AbstractModel):
             # =====================================
 
             total_gramos_local = 0
+
+            # Nuevos totales de metales específicos
+            total_gramos_oro_amarillo_18k = 0
+            total_gramos_oro_rosado_18k = 0
+
             total_ci_local = 0
             total_he_local = 0
             total_ce_local = 0
@@ -120,36 +126,170 @@ class ReportSalesByStoreXlsx(models.AbstractModel):
 
                 pago = ci + he + ce
 
+                # =====================================
+                # TOTAL GENERAL DE GRAMOS
+                # =====================================
                 total_gramos_local += gramos
+
+                # =====================================
+                # TOTAL GRAMOS POR TIPO DE ORO
+                # =====================================
+                metal = (r.metal_utilizado or '').strip().lower()
+
+                if 'oro' in metal and '18k' in metal and 'amarillo' in metal:
+                    total_gramos_oro_amarillo_18k += gramos
+
+                elif 'oro' in metal and '18k' in metal and 'rosado' in metal:
+                    total_gramos_oro_rosado_18k += gramos
+
+                # =====================================
+                # TOTALES DE COBROS
+                # =====================================
                 total_ci_local += ci
                 total_he_local += he
                 total_ce_local += ce
                 total_pago_local += pago
 
-            sheet.write(row, 0, "RESUMEN DEL LOCAL", bold)
+            # =====================================
+            # MOSTRAR RESUMEN
+            # =====================================
+
+            sheet.write(
+                row,
+                0,
+                "RESUMEN DEL LOCAL",
+                bold
+            )
+
             row += 1
 
-            sheet.write(row, 0, "Cantidad Trabajos")
-            sheet.write(row, 1, len(store_recs))
+            sheet.write(
+                row,
+                0,
+                "Cantidad Trabajos"
+            )
+
+            sheet.write(
+                row,
+                1,
+                len(store_recs)
+            )
+
             row += 1
 
-            sheet.write(row, 0, "Total Gramos")
-            sheet.write_number(row, 1, total_gramos_local, weight)
+            # -------------------------------------
+            # TOTAL GRAMOS
+            # -------------------------------------
+
+            sheet.write(
+                row,
+                0,
+                "Total Gramos"
+            )
+
+            sheet.write_number(
+                row,
+                1,
+                total_gramos_local,
+                weight
+            )
+
             row += 1
 
-            sheet.write(row, 0, "Total Cobro Interno")
-            sheet.write_number(row, 1, total_ci_local, money)
+            # -------------------------------------
+            # ORO AMARILLO 18K
+            # -------------------------------------
+
+            sheet.write(
+                row,
+                0,
+                "Total Oro Amarillo 18K"
+            )
+
+            sheet.write_number(
+                row,
+                1,
+                total_gramos_oro_amarillo_18k,
+                weight
+            )
+
             row += 1
 
-            sheet.write(row, 0, "Total Hechura")
-            sheet.write_number(row, 1, total_he_local, money)
+            # -------------------------------------
+            # ORO ROSADO 18K
+            # -------------------------------------
+
+            sheet.write(
+                row,
+                0,
+                "Total Oro Rosado 18K"
+            )
+
+            sheet.write_number(
+                row,
+                1,
+                total_gramos_oro_rosado_18k,
+                weight
+            )
+
             row += 1
 
-            sheet.write(row, 0, "Total Cobros Extras")
-            sheet.write_number(row, 1, total_ce_local, money)
+            # -------------------------------------
+            # COBROS
+            # -------------------------------------
+
+            sheet.write(
+                row,
+                0,
+                "Total Cobro Interno"
+            )
+
+            sheet.write_number(
+                row,
+                1,
+                total_ci_local,
+                money
+            )
+
             row += 1
 
-            sheet.write(row, 0, "TOTAL PAGO A TALLER", total_format)
+            sheet.write(
+                row,
+                0,
+                "Total Hechura"
+            )
+
+            sheet.write_number(
+                row,
+                1,
+                total_he_local,
+                money
+            )
+
+            row += 1
+
+            sheet.write(
+                row,
+                0,
+                "Total Cobros Extras"
+            )
+
+            sheet.write_number(
+                row,
+                1,
+                total_ce_local,
+                money
+            )
+
+            row += 1
+
+            sheet.write(
+                row,
+                0,
+                "TOTAL PAGO A TALLER",
+                total_format
+            )
+
             sheet.write_number(
                 row,
                 1,
@@ -191,7 +331,12 @@ class ReportSalesByStoreXlsx(models.AbstractModel):
                 row += 1
 
                 for col, h in enumerate(headers):
-                    sheet.write(row, col, h, bold)
+                    sheet.write(
+                        row,
+                        col,
+                        h,
+                        bold
+                    )
 
                 row += 1
 
@@ -225,7 +370,11 @@ class ReportSalesByStoreXlsx(models.AbstractModel):
                     tot_ce += ce
                     tot_pago += pago
 
-                    sheet.write(row, 0, r.name or "")
+                    sheet.write(
+                        row,
+                        0,
+                        r.name or ""
+                    )
 
                     if r.fecha_firma:
                         sheet.write_datetime(
@@ -289,11 +438,40 @@ class ReportSalesByStoreXlsx(models.AbstractModel):
                     total_format
                 )
 
-                sheet.write_number(row, 3, tot_gramos, total_weight)
-                sheet.write_number(row, 4, tot_ci, total_format)
-                sheet.write_number(row, 5, tot_he, total_format)
-                sheet.write_number(row, 6, tot_ce, total_format)
-                sheet.write_number(row, 7, tot_pago, total_format)
+                sheet.write_number(
+                    row,
+                    3,
+                    tot_gramos,
+                    total_weight
+                )
+
+                sheet.write_number(
+                    row,
+                    4,
+                    tot_ci,
+                    total_format
+                )
+
+                sheet.write_number(
+                    row,
+                    5,
+                    tot_he,
+                    total_format
+                )
+
+                sheet.write_number(
+                    row,
+                    6,
+                    tot_ce,
+                    total_format
+                )
+
+                sheet.write_number(
+                    row,
+                    7,
+                    tot_pago,
+                    total_format
+                )
 
                 row += 3
 
@@ -301,7 +479,7 @@ class ReportSalesByStoreXlsx(models.AbstractModel):
             # AJUSTAR COLUMNAS
             # =====================================
 
-            sheet.set_column(0, 0, 18)
+            sheet.set_column(0, 0, 25)
             sheet.set_column(1, 1, 18)
             sheet.set_column(2, 2, 20)
             sheet.set_column(3, 7, 18)
