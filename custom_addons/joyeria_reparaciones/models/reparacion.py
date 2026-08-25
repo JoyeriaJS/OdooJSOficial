@@ -452,6 +452,9 @@ class Reparacion(models.Model):
 
                     elif rec.tipo_diseno == 'antiguo':
                         cobro += 2000 * cantidad
+                        
+                    elif rec.tipo_vector == 'argolla':
+                        cobro += 7000 * cantidad
 
                 elif rec.metal_utilizado in [
                     'oro 18k amarillo',
@@ -464,6 +467,9 @@ class Reparacion(models.Model):
 
                     elif rec.tipo_diseno == 'antiguo':
                         cobro += 4000 * cantidad
+
+                    elif rec.tipo_vector == 'argolla':
+                        cobro += 7000 * cantidad
 
 
                 # --------------------------------
@@ -478,8 +484,6 @@ class Reparacion(models.Model):
                     elif rec.tipo_vector == 'antiguo':
                         cobro += 2000 * cantidad
                         
-                    elif rec.tipo_vector == 'argolla':
-                        cobro += 7000 * cantidad
 
                 elif rec.metal_utilizado in [
                     'oro 18k amarillo',
@@ -493,9 +497,6 @@ class Reparacion(models.Model):
 
                     elif rec.tipo_vector == 'antiguo':
                         cobro += 2000 * cantidad
-
-                    elif rec.tipo_vector == 'argolla':
-                        cobro += 7000 * cantidad
 
                 # --------------------------------
                 # ARGOLLAS
