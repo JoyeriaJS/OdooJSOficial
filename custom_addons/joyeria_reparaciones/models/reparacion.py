@@ -453,7 +453,7 @@ class Reparacion(models.Model):
                     elif rec.tipo_diseno == 'antiguo':
                         cobro += 2000 * cantidad
                         
-                    elif rec.tipo_vector == 'argolla':
+                    elif rec.tipo_diseno == 'argolla':
                         cobro += 7000 * cantidad
 
                 elif rec.metal_utilizado in [
@@ -468,7 +468,7 @@ class Reparacion(models.Model):
                     elif rec.tipo_diseno == 'antiguo':
                         cobro += 4000 * cantidad
 
-                    elif rec.tipo_vector == 'argolla':
+                    elif rec.tipo_diseno == 'argolla':
                         cobro += 7000 * cantidad
 
 
