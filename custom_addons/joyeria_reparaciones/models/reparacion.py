@@ -211,12 +211,12 @@ class Reparacion(models.Model):
     rodinado_valor = fields.Float()
     tipo_diseno = fields.Selection([
     ('nuevo','Nuevo'),
-    ('antiguo','Antiguo')
+    ('antiguo','Antiguo'),
+    ('argolla', 'Argolla')
     ])
     tipo_vector = fields.Selection([
         ('nuevo','Nuevo'),
-        ('antiguo','Antiguo') ,
-        ('argolla', 'Argolla')
+        ('antiguo','Antiguo')
 
     ])
 
