@@ -954,6 +954,7 @@ class Reparacion(models.Model):
 
 
 
+
     def write(self, vals):
         for record in self:
             ya_tiene_vendedora = bool(record.vendedora_id)
