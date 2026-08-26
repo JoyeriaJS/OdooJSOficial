@@ -838,8 +838,7 @@ class Reparacion(models.Model):
             code.write({
                 'used': True,
                 'usado_por_id': self.env.uid,
-                'fecha_uso': datetime.now(),
-                'reparacion_id': record.id
+                'fecha_uso': datetime.now()
                 
             })
 
@@ -904,6 +903,15 @@ class Reparacion(models.Model):
             raise ValidationError("❌ Clave inválida: No se encontró ninguna vendedora con esa clave (quien retira).")
 
         record = super().create(vals)
+
+        # 🔥 SOLO AQUÍ se marca usado y se relaciona al RMA
+        if code:
+            code.write({
+                'used': True,
+                'usado_por_id': self.env.uid,
+                'fecha_uso': datetime.now(),
+                'reparacion_id': record.id
+            })
 
 
         if hasattr(record, '_generar_codigo_qr'):
