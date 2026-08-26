@@ -838,7 +838,8 @@ class Reparacion(models.Model):
             code.write({
                 'used': True,
                 'usado_por_id': self.env.uid,
-                'fecha_uso': datetime.now()
+                'fecha_uso': datetime.now(),
+                'reparacion_id': record.id
                 
             })
 
@@ -903,6 +904,7 @@ class Reparacion(models.Model):
             raise ValidationError("❌ Clave inválida: No se encontró ninguna vendedora con esa clave (quien retira).")
 
         record = super().create(vals)
+
 
         if hasattr(record, '_generar_codigo_qr'):
             record._generar_codigo_qr()
