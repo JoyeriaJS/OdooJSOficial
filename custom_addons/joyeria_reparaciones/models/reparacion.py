@@ -81,10 +81,11 @@ class Reparacion(models.Model):
         ('local 383 online', 'Paseo Estado 344, Local 383 Online, Santiago Centro, Metro Plaza de Armas (Galería Pasaje Matte)'),
         ('local 921', 'Huérfanos 921 (Galería Matte), Santiago Centro, Metro Plaza de Armas'),
         ('local 584', 'Monjitas 873, Local 584, Santiago Centro, Metro Plaza de Armas'),
-        ('local maipu', 'Jumbo, Av. Los Pajaritos 3302 (Local Maipú), Metro Santiago Bueras')
+        ('local maipu', 'Jumbo, Av. Los Pajaritos 3302 (Local Maipú), Metro Santiago Bueras'),
+        ('local providencia', ' Av. Luis Thayer Ojeda 0130 (Local Providencia), Metro Tobalaba')
     ], string='Dirección de entrega', required=True)
     vencimiento_garantia = fields.Date(string='Vencimiento de la garantía',compute='_compute_vencimiento_garantia',store=True)
-    fecha_entrega = fields.Date(string='Fecha de entrega', tracking=True)
+    fecha_entrega = fields.Date(string='Fecha de entrega', required=True, tracking=True)
     responsable_id = fields.Many2one('res.users', string="Responsable", default=False, tracking=True)
     fecha_retiro = fields.Datetime(string='Fecha y hora de retiro', tracking=True)
     fecha_recepcion = fields.Datetime(
@@ -838,7 +839,8 @@ class Reparacion(models.Model):
             code.write({
                 'used': True,
                 'usado_por_id': self.env.uid,
-                'fecha_uso': datetime.now()
+                'fecha_uso': datetime.now(),
+                'reparacion_id': record.id
                 
             })
 
@@ -986,33 +988,65 @@ class Reparacion(models.Model):
         return clave
 
 
-###write funcional"""""""""
+
+
     def write(self, vals):
-        is_admin = self.env.uid == SUPERUSER_ID or self.env.user.has_group('base.group_system')
+            is_admin = self.env.uid == SUPERUSER_ID or self.env.user.has_group('base.group_system')
 
-        # Validaciones SOLO para usuarios NO admin
-        if not is_admin:
+            # ============================================================
+            # 🔒 BLOQUEAR MODIFICACIÓN DE CAMPOS AL CONFIRMAR EL RMA
+            # ============================================================
+            campos_bloqueados = {
+                'servicio',
+                'tipo_joya',
+                'metal',
+                'n_cm_reparacion',
+                'n_cm_fabricacion',
+                'peso_valor',
+                'cantidad',
+                'solicitud_cliente',
+                'precio_unitario',
+                'extra',
+                'extra2',
+                'extra3',
+            }
+
+            campos_intentados = campos_bloqueados.intersection(vals.keys())
+
+            if campos_intentados and not is_admin:
+                for rec in self:
+                    if rec.estado == 'confirmado':
+                        raise ValidationError(
+                            "No se pueden modificar los siguientes campos porque "
+                            "la reparación ya está confirmada: "
+                            + ", ".join(sorted(campos_intentados))
+                            + "."
+                        )
+
+            # Validaciones SOLO para usuarios NO admin
+            if not is_admin:
+                for rec in self:
+                    # No permitir cambiar el tipo de peso una vez creado
+                    if 'peso' in vals and vals['peso'] != rec.peso:
+                        raise ValidationError("No se permite cambiar el tipo de peso una vez creado el registro.")
+                    # Si en el futuro reactivas la validación de peso_valor, quedaría aquí análoga
+                    # Solo administración puede modificar comentarios
+                    if 'comentarios' in vals and vals['comentarios'] != rec.comentarios:
+                        raise ValidationError("Solo un administrador puede modificar la Nota Administrador.")
+
+            res = super().write(vals)
+
             for rec in self:
-                # No permitir cambiar el tipo de peso una vez creado
-                if 'peso' in vals and vals['peso'] != rec.peso:
-                    raise ValidationError("No se permite cambiar el tipo de peso una vez creado el registro.")
-                # Si en el futuro reactivas la validación de peso_valor, quedaría aquí análoga
-                # Solo administración puede modificar comentarios
-                if 'comentarios' in vals and vals['comentarios'] != rec.comentarios:
-                    raise ValidationError("Solo un administrador puede modificar la Nota Administrador.")
+                # ✍️ Procesar firma si se ingresó clave
+                if vals.get('clave_firma_manual'):
+                    rec._procesar_firma()
 
-        res = super().write(vals)
+                # 📦 Procesar vendedora si se ingresó clave
+                if vals.get('clave_autenticacion_manual'):
+                    rec._procesar_vendedora()
 
-        for rec in self:
-            # ✍️ Procesar firma si se ingresó clave
-            if vals.get('clave_firma_manual'):
-                rec._procesar_firma()
+            return res
 
-            # 📦 Procesar vendedora si se ingresó clave
-            if vals.get('clave_autenticacion_manual'):
-                rec._procesar_vendedora()
-
-        return res
 
     def imprimir_reporte_responsables(self):
         # Rango de fechas fijo, puedes cambiarlo más adelante a dinámico
