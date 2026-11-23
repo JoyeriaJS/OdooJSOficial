@@ -1,3 +1,4 @@
+
 from odoo import models, fields, api
 
 
@@ -82,6 +83,12 @@ class PosOrder(models.Model):
         store=True
     )
 
+    total_gasto = fields.Float(
+        string="Total Gasto",
+        compute="_compute_totales_pago",
+        store=True
+    )
+
     @api.depends('payment_ids.amount', 'payment_ids.payment_method_id')
     def _compute_totales_pago(self):
 
@@ -96,6 +103,7 @@ class PosOrder(models.Model):
             venta_efectivo = 0
             venta_credito = 0
             venta_transferencia = 0
+            gasto = 0
 
             for payment in order.payment_ids:
 
@@ -128,6 +136,9 @@ class PosOrder(models.Model):
                 elif metodo == "Venta Transferencia":
                     venta_transferencia += payment.amount
 
+                elif metodo == "Gasto":
+                    gasto += payment.amount
+
             order.total_efectivo = efectivo
             order.total_banco = banco
             order.total_cuenta_cliente = cuenta_cliente
@@ -137,7 +148,9 @@ class PosOrder(models.Model):
             order.total_venta_efectivo = venta_efectivo
             order.total_venta_credito = venta_credito
             order.total_venta_transferencia = venta_transferencia
+            order.total_gasto = gasto
 
+    
     @api.model
     def create_from_ui(self, orders, draft=False):
         result = super().create_from_ui(orders, draft=draft)
@@ -153,6 +166,40 @@ class PosOrder(models.Model):
                 continue
 
             for line in pos_order.lines:
+
+                # ==========================================
+                # PRODUCTO NUEVO ABONO
+                # ==========================================
+                if line.tipo_linea_rma == 'nuevo_abono':
+
+                    if not line.numero_rma:
+                        continue
+
+                    reparacion = Reparacion.search([
+                        ('name', '=', line.numero_rma)
+                    ], limit=1)
+
+                    if not reparacion:
+                        continue
+
+                    # Validar que el RMA no tenga un abono anterior
+                    if float(reparacion.abono or 0.0) > 0:
+                        continue
+
+                    monto_abono = float(line.price_subtotal_incl or 0.0)
+
+                    if monto_abono <= 0:
+                        continue
+
+                    reparacion.write({
+                        'abono': monto_abono,
+                    })
+
+                    continue
+
+                # ==========================================
+                # LÓGICA ORIGINAL PRODUCTO RMA
+                # ==========================================
                 if not line.es_linea_rma_principal:
                     continue
 
@@ -174,3 +221,4 @@ class PosOrder(models.Model):
                 })
 
         return result
+
